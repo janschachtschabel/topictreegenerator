@@ -50,18 +50,27 @@ class Properties(BaseModel):
 
 class Collection(BaseModel):
     title: str
+    shorttitle: str
     properties: Properties
     subcollections: Optional[List['Collection']] = Field(default_factory=list)
 
     def to_dict(self) -> dict:
-        return {
-            "title": self.title,
-            "properties": self.properties.to_dict(),
-            "subcollections": [sub.to_dict() for sub in self.subcollections] if self.subcollections else []
-        }
+        if not self.subcollections:
+            return {
+                "title": self.title,
+                "shorttitle": self.shorttitle,
+                "properties": self.properties.to_dict()
+            }
+        else:
+            return {
+                "title": self.title,
+                "shorttitle": self.shorttitle,
+                "properties": self.properties.to_dict(),
+                "subcollections": [sub.to_dict() for sub in self.subcollections]
+            }
 
 class TopicTree(BaseModel):
-    collection: Collection
+    collection: List[Collection]  # Liste der Hauptthemen
     metadata: dict = Field(default_factory=lambda: {
         "title": "",
         "description": "",
@@ -74,7 +83,7 @@ class TopicTree(BaseModel):
     def to_dict(self) -> dict:
         return {
             "metadata": self.metadata,
-            "collection": self.collection.to_dict()
+            "collection": [main_theme.to_dict() for main_theme in self.collection]
         }
 
 # Aktualisieren der Referenzen für rekursive Modelle
@@ -176,49 +185,154 @@ EDUCATION_SECTOR_MAPPING = {
 }
 
 # Prompt Templates als Konstanten
-MAIN_PROMPT_TEMPLATE = """Erstelle eine Liste von {num_main} Hauptthemen für einen Themenbaum zum Thema '{themenbaumthema}'{discipline_info}{context_info}{sector_info}. Die Hauptthemen sollen die wichtigsten Aspekte und Kernkonzepte des Themas abdecken.
+MAIN_PROMPT_TEMPLATE = """Erstelle eine Liste von {num_main} Hauptthemen für einen Themenbaum zum Thema '{themenbaumthema}'{discipline_info}{context_info}{sector_info}. 
+
+Beachte dabei folgende VERPFLICHTENDE Regeln:
+
+1. TITEL-REGELN:
+   - Verwende Langformen statt Abkürzungen (z.B. "Allgemeine Relativitätstheorie" statt "ART")
+   - Nutze "vs." für Gegenüberstellungen (z.B. "Perfecto vs. Indefinido")
+   - Verbinde verwandte Begriffe mit "und" (z.B. "Elektrizität und Magnetismus")
+   - Vermeide Sonderzeichen (kein Kaufmanns-und, kein Schrägstrich)
+   - Verwende Substantive (z.B. "Begrüßung und Verabschiedung")
+   - Kennzeichne Homonyme mit runden Klammern (z.B. "Lösung (Mathematik)")
+   - Vermeide Artikel und schreibe Adjektive klein
+
+2. KURZTITEL-REGELN:
+   - Maximal 20 Zeichen
+   - Prägnant und eindeutig
+   - Keine Sonderzeichen
+   - Bevorzugt ein Hauptbegriff
+
+3. BESCHREIBUNGS-REGELN:
+   - Beginne mit präziser Definition des Themas
+   - Erkläre die Relevanz im Bildungskontext
+   - Beschreibe die wesentlichen Merkmale
+   - Verwende maximal 5 prägnante Sätze
+   - Nutze klare, zielgruppengerechte Sprache
+   - Vermeide direkte Zielgruppeneinordnungen
+   - Verwende aktive Formulierungen
+   - Baue logisch auf: Definition → Relevanz → Merkmale → Anwendung
+
+4. KATEGORISIERUNG:
+Jede Sammlung MUSS einer dieser Kategorien entsprechen:
+   a) Thema (Substantiv, für Lehrplanthemen)
+   b) Kompetenz (Verb, für Fähigkeiten und Fertigkeiten)
+   c) Vermittlung (für Didaktik/Methodik)
+   d) Redaktionelle Sammlung (für spezielle Themen)
 
 Formatiere die Antwort als JSON-Array mit genau diesem Format:
 [
   {{
     "title": "Name des Hauptthemas",
+    "shorttitle": "Kurzer, prägnanter Titel (max. 20 Zeichen)",
     "description": "Ausführliche Beschreibung des Hauptthemas",
     "keywords": ["Schlagwort1", "Schlagwort2"]
   }}
 ]"""
 
-SUB_PROMPT_TEMPLATE = """Erstelle eine Liste von {num_sub} Unterthemen für das Hauptthema '{main_theme}' im Kontext von '{themenbaumthema}'{discipline_info}{context_info}{sector_info}. Die Unterthemen sollen die wichtigsten Aspekte und Teilbereiche des Hauptthemas abdecken.
+SUB_PROMPT_TEMPLATE = """Erstelle eine Liste von {num_sub} Unterthemen für das Hauptthema '{main_theme}' im Kontext von '{themenbaumthema}'{discipline_info}{context_info}{sector_info}. 
+
+Beachte dabei folgende VERPFLICHTENDE Regeln:
+
+1. TITEL-REGELN:
+   - Verwende Langformen statt Abkürzungen (z.B. "Allgemeine Relativitätstheorie" statt "ART")
+   - Nutze "vs." für Gegenüberstellungen (z.B. "Perfecto vs. Indefinido")
+   - Verbinde verwandte Begriffe mit "und" (z.B. "Elektrizität und Magnetismus")
+   - Vermeide Sonderzeichen (kein Kaufmanns-und, kein Schrägstrich)
+   - Verwende Substantive (z.B. "Begrüßung und Verabschiedung")
+   - Kennzeichne Homonyme mit runden Klammern (z.B. "Lösung (Mathematik)")
+   - Vermeide Artikel und schreibe Adjektive klein
+
+2. KURZTITEL-REGELN:
+   - Maximal 20 Zeichen
+   - Prägnant und eindeutig
+   - Keine Sonderzeichen
+   - Bevorzugt ein Hauptbegriff
+
+3. BESCHREIBUNGS-REGELN:
+   - Beginne mit präziser Definition des Themas
+   - Erkläre die Relevanz im Bildungskontext
+   - Beschreibe die wesentlichen Merkmale
+   - Verwende maximal 5 prägnante Sätze
+   - Nutze klare, zielgruppengerechte Sprache
+   - Vermeide direkte Zielgruppeneinordnungen
+   - Verwende aktive Formulierungen
+   - Baue logisch auf: Definition → Relevanz → Merkmale → Anwendung
+
+4. KATEGORISIERUNG:
+Jede Sammlung MUSS einer dieser Kategorien entsprechen:
+   a) Thema (Substantiv, für Lehrplanthemen)
+   b) Kompetenz (Verb, für Fähigkeiten und Fertigkeiten)
+   c) Vermittlung (für Didaktik/Methodik)
+   d) Redaktionelle Sammlung (für spezielle Themen)
 
 Formatiere die Antwort als JSON-Array mit genau diesem Format:
 [
   {{
     "title": "Name des Unterthemas",
+    "shorttitle": "Kurzer, prägnanter Titel (max. 20 Zeichen)",
     "description": "Ausführliche Beschreibung des Unterthemas",
     "keywords": ["Schlagwort1", "Schlagwort2"]
   }}
 ]"""
 
-LP_PROMPT_TEMPLATE = """Erstelle eine Liste von {num_lp} Lehrplanthemen für das Unterthema '{sub_theme}' im Kontext von '{themenbaumthema}'{discipline_info}{context_info}{sector_info}. Die Lehrplanthemen sollen konkrete Unterrichtseinheiten und Lernziele darstellen.
+LP_PROMPT_TEMPLATE = """Erstelle eine Liste von {num_lp} Lehrplanthemen für das Unterthema '{sub_theme}' im Kontext von '{themenbaumthema}'{discipline_info}{context_info}{sector_info}. 
+
+Beachte dabei folgende VERPFLICHTENDE Regeln:
+
+1. TITEL-REGELN:
+   - Verwende Langformen statt Abkürzungen (z.B. "Allgemeine Relativitätstheorie" statt "ART")
+   - Nutze "vs." für Gegenüberstellungen (z.B. "Perfecto vs. Indefinido")
+   - Verbinde verwandte Begriffe mit "und" (z.B. "Elektrizität und Magnetismus")
+   - Vermeide Sonderzeichen (kein Kaufmanns-und, kein Schrägstrich)
+   - Verwende Substantive (z.B. "Begrüßung und Verabschiedung")
+   - Kennzeichne Homonyme mit runden Klammern (z.B. "Lösung (Mathematik)")
+   - Vermeide Artikel und schreibe Adjektive klein
+
+2. KURZTITEL-REGELN:
+   - Maximal 20 Zeichen
+   - Prägnant und eindeutig
+   - Keine Sonderzeichen
+   - Bevorzugt ein Hauptbegriff
+
+3. BESCHREIBUNGS-REGELN:
+   - Beginne mit präziser Definition des Themas
+   - Erkläre die Relevanz im Bildungskontext
+   - Beschreibe die wesentlichen Merkmale
+   - Verwende maximal 5 prägnante Sätze
+   - Nutze klare, zielgruppengerechte Sprache
+   - Vermeide direkte Zielgruppeneinordnungen
+   - Verwende aktive Formulierungen
+   - Baue logisch auf: Definition → Relevanz → Merkmale → Anwendung
+
+4. KATEGORISIERUNG:
+Jede Sammlung MUSS einer dieser Kategorien entsprechen:
+   a) Thema (Substantiv, für Lehrplanthemen)
+   b) Kompetenz (Verb, für Fähigkeiten und Fertigkeiten)
+   c) Vermittlung (für Didaktik/Methodik)
+   d) Redaktionelle Sammlung (für spezielle Themen)
 
 Formatiere die Antwort als JSON-Array mit genau diesem Format:
 [
   {{
     "title": "Name des Lehrplanthemas",
+    "shorttitle": "Kurzer, prägnanter Titel (max. 20 Zeichen)",
     "description": "Ausführliche Beschreibung mit Lernzielen",
     "keywords": ["Schlagwort1", "Schlagwort2"]
   }}
 ]"""
 
 # Funktion zum Erstellen der Properties
-def create_properties(title: str, description: str, keywords: List[str], discipline_uri: str = "", educational_context_uri: str = "") -> Properties:
+def create_properties(title: str, shorttitle: str, description: str, keywords: List[str], discipline_uri: str = "", educational_context_uri: str = "") -> Properties:
     return Properties(
+        ccm_collectionshorttitle=[shorttitle],
+        ccm_taxonid=[discipline_uri] if discipline_uri else ["http://w3id.org/openeduhub/vocabs/discipline/460"],
         cm_title=[title],
-        cm_description=[description],
-        cclom_general_keyword=keywords,
-        ccm_collectionshorttitle=[""],
-        ccm_taxonid=[discipline_uri] if discipline_uri else [],
         ccm_educationalintendedenduserrole=["http://w3id.org/openeduhub/vocabs/intendedEndUserRole/teacher"],
-        ccm_educationalcontext=[educational_context_uri] if educational_context_uri else []
+        ccm_educationalcontext=[educational_context_uri] if educational_context_uri else ["http://w3id.org/openeduhub/vocabs/educationalContext/sekundarstufe_1"],
+        cm_description=[description],
+        cclom_general_keyword=keywords
     )
 
 # Funktion zum Anfragen der OpenAI API mit Structured Outputs
@@ -278,7 +392,21 @@ def generate_structured_text(client: OpenAI, prompt: str, model: str, schema):
                     }
                 
             # Parst die Daten mit Pydantic
-            parsed_data = [Collection(**item) for item in data]
+            parsed_data = []
+            for item in data:
+                collection = Collection(
+                    title=item["title"],
+                    shorttitle=item["shorttitle"],
+                    properties=create_properties(
+                        title=item["title"],
+                        shorttitle=item["shorttitle"],
+                        description=item["description"],
+                        keywords=item["keywords"],
+                        discipline_uri=discipline_uri,
+                        educational_context_uri=educational_context_uri
+                    )
+                )
+                parsed_data.append(collection)
             return parsed_data
             
         except json.JSONDecodeError as jde:
@@ -485,7 +613,7 @@ if st.button("Themenbaum generieren"):
         progress_bar.progress(1.0)
         status_text.text("Themenbaum erfolgreich generiert!")
 
-        # Aktualisiere die Properties aller Subcollections
+        # Aktualisiere die Properties aller Collections
         def update_collection_properties(collection: Collection):
             if not collection.properties.ccm_taxonid and discipline_uri:
                 collection.properties.ccm_taxonid = [discipline_uri]
@@ -494,36 +622,22 @@ if st.button("Themenbaum generieren"):
             for subcoll in collection.subcollections:
                 update_collection_properties(subcoll)
 
-        # Aktualisiere die Properties aller Collections
+        # Update properties for all collections
         for collection in main_collections:
             update_collection_properties(collection)
 
-        # Wähle das erste Hauptthema als Basis für die Collection
-        if main_collections and len(main_collections) > 0:
-            first_main = main_collections[0]
-            topic_tree = TopicTree(
-                collection=Collection(
-                    title=first_main.title,
-                    properties=first_main.properties,
-                    subcollections=main_collections
-                ),
-                metadata={
-                    "title": themenbaumthema,
-                    "description": f"Themenbaum für {themenbaumthema}",
-                    "target_audience": selected_context if selected_context != "Keine Vorgabe" else "",
-                    "created_at": datetime.now().isoformat(),
-                    "version": "1.0",
-                    "author": "Themenbaum Generator",
-                    "subject": selected_discipline if selected_discipline != "Keine Vorgabe" else "",
-                    "educational_context": selected_context if selected_context != "Keine Vorgabe" else "",
-                    "educational_context_uri": educational_context_uri,
-                    "discipline_uri": discipline_uri,
-                    "education_sector": selected_sector if selected_sector != "Keine Vorgabe" else ""
-                }
-            )
-        else:
-            st.error("Keine Hauptthemen generiert")
-            st.stop()
+        # Erstelle den Themenbaum
+        topic_tree = TopicTree(
+            collection=main_collections,
+            metadata={
+                "title": themenbaumthema,
+                "description": f"Themenbaum für {themenbaumthema}",
+                "target_audience": "Lehrkräfte und Bildungseinrichtungen",
+                "created_at": datetime.now().isoformat(),
+                "version": "1.0",
+                "author": "Themenbaum Generator"
+            }
+        )
         
         # Konvertiere den Themenbaum in ein Dictionary
         themes_tree = topic_tree.to_dict()
