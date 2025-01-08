@@ -10,6 +10,38 @@ Ein interaktives Tool zur Generierung strukturierter Themenbäume für Bildungsi
 - Dynamische Fortschrittsanzeige während der Generierung
 - Anpassbare Anzahl von Themen auf jeder Ebene
 - Unterstützung verschiedener Bildungskontexte und Fachbereiche
+- Standardisierte Benennungskonventionen für alle Themenebenen
+- Qualitätsgeprüfte Beschreibungstexte nach didaktischen Richtlinien
+
+## Formatierungsregeln
+
+### Titel-Konventionen
+- Verwendung von Langformen statt Abkürzungen
+- Standardisierte Verbindung von Begriffen mit "und" oder "vs."
+- Vermeidung von Sonderzeichen
+- Substantiv-basierte Benennungen
+- Kennzeichnung von Homonymen mit Klammern
+- Keine Artikel, klein geschriebene Adjektive
+
+### Kurztitel
+- Maximal 20 Zeichen
+- Prägnant und eindeutig
+- Keine Sonderzeichen
+- Bevorzugt ein Hauptbegriff
+
+### Beschreibungen
+- Klare Struktur: Definition → Relevanz → Merkmale → Anwendung
+- Maximal 5 prägnante Sätze
+- Zielgruppengerechte Sprache
+- Aktive Formulierungen
+- Fokus auf Bildungskontext
+
+### Kategorisierung
+Jede Sammlung wird einer der folgenden Kategorien zugeordnet:
+- Thema (Substantiv, für Lehrplanthemen)
+- Kompetenz (Verb, für Fähigkeiten und Fertigkeiten)
+- Vermittlung (für Didaktik/Methodik)
+- Redaktionelle Sammlung (für spezielle Themen)
 
 ## Installation
 
