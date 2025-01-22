@@ -47,7 +47,7 @@ def save_json_with_timestamp(data: dict, prefix: str, suffix: str = "") -> str:
     return str(filepath)
 
 ###############################################################################
-# 2) Pydantic-Modelle: Properties, Collection, TopicTree
+# 2) Pydantic-Modelle: Properties, Collection, TopicTree, QAPairs
 ###############################################################################
 class Properties(BaseModel):
     ccm_collectionshorttitle: List[str] = Field(default_factory=lambda: [""])
@@ -114,6 +114,32 @@ class TopicTree(BaseModel):
         return {
             "metadata": self.metadata,
             "collection": [c.to_dict() for c in self.collection]
+        }
+
+class QAPair(BaseModel):
+    """Ein einzelnes Frage-Antwort-Paar."""
+    question: str
+    answer: str
+    metadata: Optional[Dict[str, Any]] = Field(default_factory=dict)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "question": self.question,
+            "answer": self.answer,
+            "metadata": self.metadata
+        }
+
+class QACollection(BaseModel):
+    """Eine Sammlung von Frage-Antwort-Paaren."""
+    qa_pairs: List[QAPair]
+    topic: str
+    metadata: Optional[Dict[str, Any]] = Field(default_factory=dict)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "qa_pairs": [qa.to_dict() for qa in self.qa_pairs],
+            "topic": self.topic,
+            "metadata": self.metadata
         }
 
 ###############################################################################
@@ -849,9 +875,11 @@ def find_wikipedia_url(term: str, entity_class: str = None, language: str = "de"
     }
     
     try:
-        response = requests.get(endpoint, params=params).json()
-        if response["query"]["search"]:
-            page_title = response["query"]["search"][0]["title"]
+        response = requests.get(endpoint, params=params)
+        data = response.json()
+        
+        if "query" in data and "search" in data["query"]:
+            page_title = data["query"]["search"][0]["title"]
             return f"https://{language}.wikipedia.org/wiki/{page_title.replace(' ', '_')}"
     except Exception as e:
         # Fehler leise unterdrücken und None zurückgeben
@@ -1347,7 +1375,7 @@ def show_qa_page(openai_key: str, model: str):
             "📝 Anzahl Fragen pro Sammlung",
             min_value=1,
             max_value=100,
-            value=20,
+            value=10,
             step=1
         )
     with col2:
@@ -1355,7 +1383,7 @@ def show_qa_page(openai_key: str, model: str):
             "📏 Durchschnittliche Antwortlänge (Zeichen)",
             min_value=100,
             max_value=2000,
-            value=300,
+            value=200,
             step=100
         )
 
@@ -1443,7 +1471,7 @@ def show_qa_page(openai_key: str, model: str):
                         
                 st.write(f"Hauptthema {i+1} abgeschlossen: {current}/{total_nodes} Knoten verarbeitet")
 
-        # Speichere erweiterte JSON
+        # Speichere erweiterte JSON in data Ordner
         try:
             filepath = save_json_with_timestamp(tree_data, prefix="themenbaum", suffix="_qa")
             st.success(f"Q&A-Version gespeichert unter: {filepath}")
@@ -1452,7 +1480,7 @@ def show_qa_page(openai_key: str, model: str):
 
         st.success("Q&A-Generierung abgeschlossen!")
         
-        # Download Button
+        # Download Button für manuelle Speicherung
         final_qa = json.dumps(tree_data, indent=2, ensure_ascii=False)
         st.download_button(
             "💾 JSON mit Q&A herunterladen",
@@ -1618,15 +1646,16 @@ def show_compendium_page(openai_key: str, model: str):
 
 def generate_qa_pairs(client: OpenAI, collection: dict, metadata: dict, 
                     num_questions: int = 20, include_compendium: bool = False,
-                    include_entities: bool = False, average_qa_length: int = 300) -> List[dict]:
+                    include_entities: bool = False, average_qa_length: int = 300) -> QACollection:
     """
     Generiert Frage-Antwort-Paare für eine Sammlung.
+    Verwendet Pydantic-Modelle für strukturierte Ausgabe.
     """
     # Sammle Kontext-Informationen
     title = collection.get("title", "")
     description = collection.get("description", "")
     keywords = collection.get("keywords", [])
-    
+
     collection_info = {
         "title": title,
         "description": description,
@@ -1635,8 +1664,8 @@ def generate_qa_pairs(client: OpenAI, collection: dict, metadata: dict,
     
     # Optional: Füge Kompendium hinzu
     compendium_text = ""
-    if include_compendium and "compendium_text" in collection:
-        compendium_text = collection["compendium_text"]
+    if include_compendium and "additional_data" in collection and "compendium_text" in collection["additional_data"]:
+        compendium_text = collection["additional_data"]["compendium_text"]
         
     # Optional: Füge Entitäten-Informationen hinzu
     entities_info = ""
@@ -1650,31 +1679,126 @@ def generate_qa_pairs(client: OpenAI, collection: dict, metadata: dict,
             for e in entities
         ])
     
-    # Erstelle Prompt
-    prompt = QA_PROMPT_TEMPLATE.format(
-        total_questions=num_questions,
-        title=title,
-        collection=json.dumps(collection_info, ensure_ascii=False),
-        metadata_topictree=json.dumps(metadata, ensure_ascii=False),
-        compendium=compendium_text if include_compendium else "",
-        background_info_entity=entities_info if include_entities else "",
-        average_qa_length=average_qa_length
-    )
+    # Erstelle Prompt mit klaren Anweisungen für JSON-Format
+    prompt = f"""Generiere {num_questions} Frage-Antwort-Paare für das Thema '{title}'.
     
-    try:
+Wichtig: 
+- Antworte NUR mit validem JSON
+- Vermeide Zeilenumbrüche in Strings
+- Escape alle Sonderzeichen korrekt
+- Halte die Antworten kurz und präzise
+
+Kontext:
+{json.dumps(collection_info, ensure_ascii=False)}
+
+Kompendium:
+{compendium_text}
+
+Entitäten:
+{entities_info}
+
+Durchschnittliche Länge pro Antwort: {average_qa_length} Zeichen"""
+
+    @backoff.on_exception(backoff.expo, (RateLimitError, APIError), max_tries=5, jitter=backoff.full_jitter)
+    def call_openai():
         response = client.chat.completions.create(
             model="gpt-4",
-            messages=[{"role": "user", "content": prompt}],
+            messages=[
+                {"role": "system", "content": "Du bist ein Experte für die Generierung von Frage-Antwort-Paaren. Antworte NUR mit validem JSON."},
+                {"role": "user", "content": prompt}
+            ],
+            functions=[{
+                "name": "create_qa_pairs",
+                "description": "Erstellt eine Liste von Frage-Antwort-Paaren",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "qa_pairs": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "question": {"type": "string"},
+                                    "answer": {"type": "string"}
+                                },
+                                "required": ["question", "answer"]
+                            }
+                        }
+                    },
+                    "required": ["qa_pairs"]
+                }
+            }],
+            function_call={"name": "create_qa_pairs"},
             temperature=0.7
         )
         
-        # Parse JSON response
-        qa_pairs = json.loads(response.choices[0].message.content)
-        return qa_pairs
+        # Parse und validiere die Antwort
+        try:
+            function_args = json.loads(response.choices[0].message.function_call.arguments)
+            # Validiere die Struktur
+            if not isinstance(function_args, dict) or "qa_pairs" not in function_args:
+                raise ValueError("Ungültige JSON-Struktur in der Antwort")
+            
+            # Validiere jedes QA-Paar
+            for pair in function_args["qa_pairs"]:
+                if not isinstance(pair, dict) or "question" not in pair or "answer" not in pair:
+                    raise ValueError("Ungültiges QA-Paar Format")
+                
+                # Bereinige Strings
+                pair["question"] = pair["question"].strip().replace("\n", " ").replace("\r", " ")
+                pair["answer"] = pair["answer"].strip().replace("\n", " ").replace("\r", " ")
+            
+            return function_args
+            
+        except json.JSONDecodeError as jde:
+            raise ValueError(f"JSON-Parsing-Fehler: {str(jde)}")
+    
+    try:
+        # Versuche die QA-Generierung mit Retry
+        function_args = call_openai()
+        
+        # Konvertiere zu Pydantic-Modell
+        qa_collection = QACollection(
+            qa_pairs=[QAPair(**pair) for pair in function_args["qa_pairs"]],
+            topic=title,
+            metadata={
+                "generated_at": datetime.now().isoformat(),
+                "model": "gpt-4",
+                "num_questions": num_questions,
+                "include_compendium": include_compendium,
+                "include_entities": include_entities
+            }
+        )
+        
+        return qa_collection
         
     except Exception as e:
         st.error(f"Fehler bei QA-Generierung für '{title}': {str(e)}")
-        return []
+        # Leere Sammlung zurückgeben
+        return QACollection(qa_pairs=[], topic=title)
+
+def clean_json_response(content: str) -> str:
+    """
+    Bereinigt die JSON-Antwort des LLM von Markdown und Escape-Sequenzen.
+    """
+    # Entferne Markdown-Code-Blöcke
+    content = content.strip()
+    if content.startswith("```"):
+        content = "\n".join(content.split("\n")[1:-1])
+    content = content.strip("```json").strip("```").strip()
+    
+    # Ersetze problematische Zeichen
+    replacements = {
+        "\n": " ",        # Newlines durch Spaces
+        "\r": " ",        # Carriage returns durch Spaces
+        "\t": " ",        # Tabs durch Spaces
+        "\\": "\\\\",     # Escape Backslashes
+        '"': '\\"',       # Escape Quotes
+    }
+    for old, new in replacements.items():
+        content = content.replace(old, new)
+        
+    return content
 
 def process_node_qa(client: OpenAI, node: dict, metadata: dict,
                    progress_bar: st.progress, progress_text: st.empty,
@@ -1708,7 +1832,7 @@ def process_node_qa(client: OpenAI, node: dict, metadata: dict,
         if qa_pairs:
             if "additional_data" not in node:
                 node["additional_data"] = {}
-            node["additional_data"]["qa_pairs"] = qa_pairs
+            node["additional_data"]["qa_pairs"] = qa_pairs.to_dict()
             st.write(f"Q&A generiert für: {node['title']}")
         
         current += 1
