@@ -120,13 +120,11 @@ class QAPair(BaseModel):
     """Ein einzelnes Frage-Antwort-Paar."""
     question: str
     answer: str
-    metadata: Optional[Dict[str, Any]] = Field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> Dict[str, str]:
         return {
             "question": self.question,
-            "answer": self.answer,
-            "metadata": self.metadata
+            "answer": self.answer
         }
 
 class QACollection(BaseModel):
@@ -1389,12 +1387,12 @@ def show_qa_page(openai_key: str, model: str):
 
     # Optionen für zusätzliche Informationen
     include_compendium = st.checkbox(
-        "📚 Kompendiale Texte einbeziehen",
+        "📚 Kompendium einbeziehen",
         value=True,
         help="Bezieht die generierten Kompendium-Texte in die Q&A-Generierung ein"
     )
     include_entities = st.checkbox(
-        "🔍 Entitäten-Informationen einbeziehen",
+        "🔍 Entitäten einbeziehen",
         value=True,
         help="Bezieht Wikipedia- und Wikidata-Informationen der Entitäten ein"
     )
@@ -1466,7 +1464,8 @@ def show_qa_page(openai_key: str, model: str):
                     end_percent=end_percent,
                     num_questions=num_questions,
                     include_compendium=include_compendium,
-                    include_entities=include_entities
+                    include_entities=include_entities,
+                    model=model
                 )
                         
                 st.write(f"Hauptthema {i+1} abgeschlossen: {current}/{total_nodes} Knoten verarbeitet")
@@ -1645,11 +1644,22 @@ def show_compendium_page(openai_key: str, model: str):
         )
 
 def generate_qa_pairs(client: OpenAI, collection: dict, metadata: dict, 
-                    num_questions: int = 20, include_compendium: bool = False,
-                    include_entities: bool = False, average_qa_length: int = 300) -> QACollection:
+                    num_questions: int = 10, include_compendium: bool = False,
+                    include_entities: bool = False, average_qa_length: int = 300,
+                    model: str = "gpt-4") -> QACollection:
     """
     Generiert Frage-Antwort-Paare für eine Sammlung.
     Verwendet Pydantic-Modelle für strukturierte Ausgabe.
+    
+    Args:
+        client: OpenAI Client
+        collection: Die zu verarbeitende Sammlung
+        metadata: Metadaten des Themenbaums
+        num_questions: Anzahl der zu generierenden Fragen
+        include_compendium: Ob das Kompendium einbezogen werden soll
+        include_entities: Ob Entitäten einbezogen werden sollen
+        average_qa_length: Durchschnittliche Länge der Antworten
+        model: Das zu verwendende LLM-Modell
     """
     # Sammle Kontext-Informationen
     title = collection.get("title", "")
@@ -1702,7 +1712,7 @@ Durchschnittliche Länge pro Antwort: {average_qa_length} Zeichen"""
     @backoff.on_exception(backoff.expo, (RateLimitError, APIError), max_tries=5, jitter=backoff.full_jitter)
     def call_openai():
         response = client.chat.completions.create(
-            model="gpt-4",
+            model=model,
             messages=[
                 {"role": "system", "content": "Du bist ein Experte für die Generierung von Frage-Antwort-Paaren. Antworte NUR mit validem JSON."},
                 {"role": "user", "content": prompt}
@@ -1763,7 +1773,7 @@ Durchschnittliche Länge pro Antwort: {average_qa_length} Zeichen"""
             topic=title,
             metadata={
                 "generated_at": datetime.now().isoformat(),
-                "model": "gpt-4",
+                "model": model,
                 "num_questions": num_questions,
                 "include_compendium": include_compendium,
                 "include_entities": include_entities
@@ -1803,11 +1813,25 @@ def clean_json_response(content: str) -> str:
 def process_node_qa(client: OpenAI, node: dict, metadata: dict,
                    progress_bar: st.progress, progress_text: st.empty,
                    current: int, total: int, start_percent: float, end_percent: float,
-                   num_questions: int = 20, include_compendium: bool = False,
-                   include_entities: bool = False) -> int:
+                   num_questions: int = 10, include_compendium: bool = False,
+                   include_entities: bool = False, model: str = "gpt-4") -> int:
     """
     Verarbeitet QA-Generierung für einen Node und seine Unterknoten.
-    Verarbeitet rekursiv alle Ebenen des Themenbaums.
+    
+    Args:
+        client: OpenAI Client
+        node: Der zu verarbeitende Knoten
+        metadata: Metadaten des Themenbaums
+        progress_bar: Streamlit Fortschrittsbalken
+        progress_text: Streamlit Textfeld für Status
+        current: Aktueller Fortschritt
+        total: Gesamtanzahl der Knoten
+        start_percent: Startprozent für diesen Knoten
+        end_percent: Endprozent für diesen Knoten
+        num_questions: Anzahl der Fragen pro Knoten
+        include_compendium: Ob das Kompendium einbezogen werden soll
+        include_entities: Ob Entitäten einbezogen werden sollen
+        model: Das zu verwendende LLM-Modell
     """
     if not isinstance(node, dict) or "title" not in node:
         return current
@@ -1825,7 +1849,8 @@ def process_node_qa(client: OpenAI, node: dict, metadata: dict,
             metadata=metadata,
             num_questions=num_questions,
             include_compendium=include_compendium,
-            include_entities=include_entities
+            include_entities=include_entities,
+            model=model
         )
         
         # Speichere QA-Paare
@@ -1868,7 +1893,8 @@ def process_node_qa(client: OpenAI, node: dict, metadata: dict,
                         end_percent=sub_end,
                         num_questions=num_questions,
                         include_compendium=include_compendium,
-                        include_entities=include_entities
+                        include_entities=include_entities,
+                        model=model
                     )
                 else:
                     st.warning(f"Überspringe ungültigen Unterknoten in '{node['title']}'")
