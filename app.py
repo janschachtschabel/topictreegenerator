@@ -707,7 +707,7 @@ def traverse_and_compendium(
     include_wikipedia: bool = False
 ):
     """
-    Durchläuft Rekursiv alle Knoten, generiert Kompendium und optional Wikipedia-Entitäten.
+    Durchläuft Rekursiv alle Knoten, generiert erweiterten kompendialen Text und optional Wikipedia-Entitäten.
     """
     for node in node_list:
         status_msg.text(f"Generiere Kompendium für '{node['title']}'...")
@@ -830,93 +830,98 @@ def extract_entities(client: OpenAI, text: str, model: str) -> Optional[List[dic
         st.error(f"Fehler bei der Entitätsextraktion: {e}")
         return None
 
-def find_wikipedia_url(term: str, language: str = "de") -> Optional[str]:
+def find_wikipedia_url(term: str, entity_class: str = None, language: str = "de") -> Optional[str]:
     """
     Sucht die korrekte Wikipedia-URL für einen Begriff.
+    Berücksichtigt optional die Entitätsklasse für bessere Suchtreffer.
     """
+    # Kombiniere Begriff und Klasse für bessere Suche
+    search_term = term
+    if entity_class and entity_class.lower() not in ["unbekannt", "unknown", "none", ""]:
+        search_term = f"{term} {entity_class}"
+        
     endpoint = f"https://{language}.wikipedia.org/w/api.php"
     params = {
         "action": "query",
         "list": "search",
-        "srsearch": term,
+        "srsearch": search_term,
         "format": "json",
     }
+    
     try:
-        response = requests.get(endpoint, params=params)
+        response = requests.get(endpoint, params=params).json()
         if response["query"]["search"]:
             page_title = response["query"]["search"][0]["title"]
             return f"https://{language}.wikipedia.org/wiki/{page_title.replace(' ', '_')}"
     except Exception as e:
-        st.error(f"Fehler bei Wikipedia-Suche für '{term}': {e}")
+        # Fehler leise unterdrücken und None zurückgeben
+        pass
     return None
 
 def correct_wikipedia_urls(entities: List[dict]) -> List[dict]:
     """
     Korrigiert fehlerhafte Wikipedia-URLs und holt fehlende Inhalte.
+    Berücksichtigt die Entitätsklasse für bessere Suchtreffer.
     """
     for entity in entities:
-        # Überspringe Entitäten, die bereits Inhalt haben
+        # Überspringe Entitäten die bereits Content haben
         if entity.get("wikipedia_content"):
             continue
             
-        # Versuche URL-Korrektur
-        corrected_url = find_wikipedia_url(entity["entity-name"])
+        # Versuche URL-Korrektur mit Entitätsname und -klasse
+        entity_name = entity.get("entity-name", "")
+        entity_class = entity.get("entity-class", "")
+        
+        corrected_url = find_wikipedia_url(entity_name, entity_class)
         if corrected_url:
-            # Aktualisiere URL
             entity["wikipediaurl"] = corrected_url
             # Hole Inhalt mit korrigierter URL
-            wiki_content = get_wikipedia_content(corrected_url)
-            if wiki_content:
-                entity["wikipedia_content"] = wiki_content
+            content = get_wikipedia_content(corrected_url)
+            if content:
+                entity["wikipedia_content"] = content
                 
     return entities
 
 def get_wikipedia_content(url: str) -> Optional[str]:
     """
     Holt den Inhalt einer Wikipedia-Seite.
+    Folgt Redirects und versucht verschiedene URL-Varianten.
     """
     try:
-        # Extrahiere den Titel aus der URL
-        title = url.split("/wiki/")[-1].replace("_", " ")
+        # Extrahiere Titel aus URL und decodiere
+        title = url.split("/wiki/")[-1]
+        title = urllib.parse.unquote(title).replace("_", " ")
         
-        # Baue die Wikipedia API URL
+        # API-Parameter
         api_url = "https://de.wikipedia.org/w/api.php"
         params = {
             "action": "query",
             "format": "json",
-            "prop": "extracts",
+            "prop": "extracts|info",
             "exintro": 1,
             "explaintext": 1,
+            "redirects": 1,  # Folge Redirects
             "titles": title
         }
         
-        # Versuche zuerst mit Original-Titel
         response = requests.get(api_url, params=params)
         data = response.json()
         pages = data["query"]["pages"]
+        
+        # Hole erste Seite
         page = next(iter(pages.values()))
         
-        content = page.get("extract", "").strip()
-        if content:
-            return content
-            
-        # Wenn kein Inhalt, versuche mit URL-decodiertem Titel
-        decoded_title = urllib.parse.unquote(title)
-        if decoded_title != title:  # Nur wenn sich der Titel unterscheidet
-            params["titles"] = decoded_title
-            response = requests.get(api_url, params=params)
-            data = response.json()
-            pages = data["query"]["pages"]
-            page = next(iter(pages.values()))
-            content = page.get("extract", "").strip()
+        # Prüfe auf Inhalt
+        if "extract" in page:
+            content = page["extract"].strip()
             if content:
                 return content
                 
-        return None
-        
     except Exception as e:
-        # Keine Fehlerausgabe, da dies später durch URL-Korrektur behandelt wird
-        return None
+        # Fehler leise unterdrücken
+        pass
+        
+    return None
 
 def get_wikidata_candidates(query: str, lang: str = "de") -> List[dict]:
     """
@@ -1462,7 +1467,7 @@ def show_compendium_page(openai_key: str, model: str):
     Seite für Kompendiale Texte.
     """
     st.title("📚 Kompendiale Texte generieren")
-    st.write("Füge zu jedem Haupt-/Fach-/Lehrplan-Thema einen 2-seitigen kompakten Text hinzu.")
+    st.write("Füge zu jedem Themen einen 2-seitigen kompakten Text hinzu. Bilde auf Basis des Textes Entitäten und rufe Wissen ab.")
 
     json_files = get_json_files()
     if not json_files:
@@ -1479,15 +1484,15 @@ def show_compendium_page(openai_key: str, model: str):
     col1, col2, col3 = st.columns(3)
     with col1:
         include_wikipedia = st.checkbox(
-            "🌐 Wikipedia-Entitäten extrahieren",
+            "🌐 Texte erweitern und Entitäten extrahieren",
             value=False,
-            help="Extrahiert wichtige Begriffe und deren Wikipedia-Beschreibungen"
+            help="Generiert kompendiale Texte und extrahiert wichtige Begriffe und deren Wikipedia-URLs."
         )
     with col2:
         auto_correct_urls = st.checkbox(
             "🔄 Wikipedia-URLs korrigieren",
             value=True,
-            help="Versucht fehlerhafte URLs zu korrigieren und fehlende Inhalte nachzuladen",
+            help="Versucht fehlerhafte Wikipedia-URLs mit Hilfe einer Suchfunktion zu korrigiere.",
             disabled=not include_wikipedia
         )
     with col3:
