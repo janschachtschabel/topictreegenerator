@@ -1,0 +1,9 @@
+# Core dependencies
+fastapi==0.104.1   # FastAPI framework
+uvicorn==0.24.0    # ASGI server
+openai==1.0.0      # OpenAI API client
+pydantic==2.5.2    # Data validation
+
+# API and networking
+backoff>=2.2.1     # API retry handling
+python-dotenv==1.0.0  # Environment variables
