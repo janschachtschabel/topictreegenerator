@@ -1,0 +1,593 @@
+{
+  "collection": [
+    {
+      "title": "Mechanik und Dynamik",
+      "shorttitle": "Mechanik",
+      "properties": {
+        "ccm_collectionshorttitle": [
+          "Mechanik"
+        ],
+        "ccm_taxonid": [
+          "http://w3id.org/openeduhub/vocabs/discipline/460"
+        ],
+        "cm_title": [
+          "Mechanik und Dynamik"
+        ],
+        "ccm_educationalintendedenduserrole": [
+          "http://w3id.org/openeduhub/vocabs/intendedEndUserRole/teacher"
+        ],
+        "ccm_educationalcontext": [
+          "http://w3id.org/openeduhub/vocabs/educationalContext/sekundarstufe_2"
+        ],
+        "cm_description": [
+          "Untersuchung der Bewegungen von Körpern, Kräftewirkungen und Energieumwandlungen, einschließlich Kinematik, Newtonschen Gesetzen und Impulserhaltung."
+        ],
+        "cclom_general_keyword": []
+      },
+      "subcollections": [
+        {
+          "title": "Kinematik der Punktbewegung",
+          "shorttitle": "Kinematik",
+          "properties": {
+            "ccm_collectionshorttitle": [
+              "Kinematik"
+            ],
+            "ccm_taxonid": [
+              "http://w3id.org/openeduhub/vocabs/discipline/460"
+            ],
+            "cm_title": [
+              "Kinematik der Punktbewegung"
+            ],
+            "ccm_educationalintendedenduserrole": [
+              "http://w3id.org/openeduhub/vocabs/intendedEndUserRole/teacher"
+            ],
+            "ccm_educationalcontext": [
+              "http://w3id.org/openeduhub/vocabs/educationalContext/sekundarstufe_2"
+            ],
+            "cm_description": [
+              "Analyse der Bewegungsarten von Körpern unter Betrachtung von Ort, Geschwindigkeit und Beschleunigung ohne Berücksichtigung der verursachenden Kräfte."
+            ],
+            "cclom_general_keyword": []
+          },
+          "subcollections": [
+            {
+              "title": "Grundlagen der Kinematik: Orts-, Geschwindigkeits- und Beschleunigungsgrößen",
+              "shorttitle": "Grundlagen Kinematik",
+              "properties": {
+                "ccm_collectionshorttitle": [
+                  "Grundlagen Kinematik"
+                ],
+                "ccm_taxonid": [
+                  "http://w3id.org/openeduhub/vocabs/discipline/460"
+                ],
+                "cm_title": [
+                  "Grundlagen der Kinematik: Orts-, Geschwindigkeits- und Beschleunigungsgrößen"
+                ],
+                "ccm_educationalintendedenduserrole": [
+                  "http://w3id.org/openeduhub/vocabs/intendedEndUserRole/teacher"
+                ],
+                "ccm_educationalcontext": [
+                  "http://w3id.org/openeduhub/vocabs/educationalContext/sekundarstufe_2"
+                ],
+                "cm_description": [
+                  "Dieses Lehrplanthema behandelt die grundlegenden Größen der Kinematik, einschließlich der Definition und grafischen Darstellung von Ort, Weg, Geschwindigkeit und Beschleunigung. Die Schüler lernen, Bewegungsvorgänge zeitlich und räumlich zu beschreiben sowie die Zusammenhänge zwischen den Größen in verschiedenen Bewegungsarten zu analysieren."
+                ],
+                "cclom_general_keyword": []
+              },
+              "subcollections": [],
+              "additional_data": {}
+            }
+          ],
+          "additional_data": {}
+        },
+        {
+          "title": "Newtons Gesetze und Impulserhaltung",
+          "shorttitle": "Newtons Gesetze",
+          "properties": {
+            "ccm_collectionshorttitle": [
+              "Newtons Gesetze"
+            ],
+            "ccm_taxonid": [
+              "http://w3id.org/openeduhub/vocabs/discipline/460"
+            ],
+            "cm_title": [
+              "Newtons Gesetze und Impulserhaltung"
+            ],
+            "ccm_educationalintendedenduserrole": [
+              "http://w3id.org/openeduhub/vocabs/intendedEndUserRole/teacher"
+            ],
+            "ccm_educationalcontext": [
+              "http://w3id.org/openeduhub/vocabs/educationalContext/sekundarstufe_2"
+            ],
+            "cm_description": [
+              "Untersuchung der Wechselwirkungen von Kräften auf Körper, die Anwendung der Newtonschen Bewegungsgesetze sowie die Prinzipien der Impulserhaltung in mechanischen Systemen."
+            ],
+            "cclom_general_keyword": []
+          },
+          "subcollections": [
+            {
+              "title": "Grundlagen der Newtonschen Bewegungsgesetze und deren Anwendung",
+              "shorttitle": "Newtons Gesetze",
+              "properties": {
+                "ccm_collectionshorttitle": [
+                  "Newtons Gesetze"
+                ],
+                "ccm_taxonid": [
+                  "http://w3id.org/openeduhub/vocabs/discipline/460"
+                ],
+                "cm_title": [
+                  "Grundlagen der Newtonschen Bewegungsgesetze und deren Anwendung"
+                ],
+                "ccm_educationalintendedenduserrole": [
+                  "http://w3id.org/openeduhub/vocabs/intendedEndUserRole/teacher"
+                ],
+                "ccm_educationalcontext": [
+                  "http://w3id.org/openeduhub/vocabs/educationalContext/sekundarstufe_2"
+                ],
+                "cm_description": [
+                  "Dieses Lehrplanthema behandelt die drei Bewegungsgesetze von Isaac Newton, ihre mathematische Formulierung sowie deren Anwendung zur Analyse von Kräften und Bewegungen in mechanischen Systemen. Es umfasst die Untersuchung von Kraft, Masse, Beschleunigung und die Prinzipien der Trägheit, Aktion und Reaktion anhand von Beispielen aus dem Alltag und experimentellen Fragestellungen."
+                ],
+                "cclom_general_keyword": []
+              },
+              "subcollections": [],
+              "additional_data": {}
+            },
+            {
+              "title": "Impulserhaltungsgesetz: Theorie und praktische Anwendungen",
+              "shorttitle": "Impulserhaltung",
+              "properties": {
+                "ccm_collectionshorttitle": [
+                  "Impulserhaltung"
+                ],
+                "ccm_taxonid": [
+                  "http://w3id.org/openeduhub/vocabs/discipline/460"
+                ],
+                "cm_title": [
+                  "Impulserhaltungsgesetz: Theorie und praktische Anwendungen"
+                ],
+                "ccm_educationalintendedenduserrole": [
+                  "http://w3id.org/openeduhub/vocabs/intendedEndUserRole/teacher"
+                ],
+                "ccm_educationalcontext": [
+                  "http://w3id.org/openeduhub/vocabs/educationalContext/sekundarstufe_2"
+                ],
+                "cm_description": [
+                  "Im Fokus dieses Lehrplanthemas steht das Impulserhaltungsgesetz als fundamentales Prinzip in der Mechanik. Die Schüler lernen, wie der Impuls definiert wird, wie Impulserhaltung in abgeschlossenen Systemen gilt und wie dieses Prinzip bei verschiedenen Stoßarten (elastisch, unelastisch) angewendet wird. Zudem werden praktische Anwendungen, z.B. bei Zusammenstößen und Raketenantrieben, analysiert."
+                ],
+                "cclom_general_keyword": []
+              },
+              "subcollections": [],
+              "additional_data": {}
+            },
+            {
+              "title": "Wechselwirkungen und Kraftnetze: Analyse komplexer mechanischer Systeme",
+              "shorttitle": "Wechselwirkungen",
+              "properties": {
+                "ccm_collectionshorttitle": [
+                  "Wechselwirkungen"
+                ],
+                "ccm_taxonid": [
+                  "http://w3id.org/openeduhub/vocabs/discipline/460"
+                ],
+                "cm_title": [
+                  "Wechselwirkungen und Kraftnetze: Analyse komplexer mechanischer Systeme"
+                ],
+                "ccm_educationalintendedenduserrole": [
+                  "http://w3id.org/openeduhub/vocabs/intendedEndUserRole/teacher"
+                ],
+                "ccm_educationalcontext": [
+                  "http://w3id.org/openeduhub/vocabs/educationalContext/sekundarstufe_2"
+                ],
+                "cm_description": [
+                  "Dieses Thema fokussiert die Untersuchung von Kräften in komplexeren mechanischen Systemen, einschließlich der Erstellung und Interpretation von Kraftnetzen. Es werden Methoden zur Zerlegung von Kräften, zur Bestimmung von Resultierenden und zur Analyse von Gleichgewichtsbedingungen vermittelt, um das Verständnis der Newtonschen Gesetze und Impulserhaltung in realistischen Kontexten zu vertiefen."
+                ],
+                "cclom_general_keyword": []
+              },
+              "subcollections": [],
+              "additional_data": {}
+            }
+          ],
+          "additional_data": {}
+        }
+      ],
+      "additional_data": {}
+    },
+    {
+      "title": "Elektrodynamik und Magnetismus",
+      "shorttitle": "Elektrodynamik",
+      "properties": {
+        "ccm_collectionshorttitle": [
+          "Elektrodynamik"
+        ],
+        "ccm_taxonid": [
+          "http://w3id.org/openeduhub/vocabs/discipline/460"
+        ],
+        "cm_title": [
+          "Elektrodynamik und Magnetismus"
+        ],
+        "ccm_educationalintendedenduserrole": [
+          "http://w3id.org/openeduhub/vocabs/intendedEndUserRole/teacher"
+        ],
+        "ccm_educationalcontext": [
+          "http://w3id.org/openeduhub/vocabs/educationalContext/sekundarstufe_2"
+        ],
+        "cm_description": [
+          "Analyse elektrischer und magnetischer Felder, Wechselwirkungen, elektrische Ströme und elektromagnetische Induktion im Kontext moderner Anwendungen."
+        ],
+        "cclom_general_keyword": []
+      },
+      "subcollections": [
+        {
+          "title": "Elektrische Felder und elektrische Ströme",
+          "shorttitle": "Elektrische Felder & Ströme",
+          "properties": {
+            "ccm_collectionshorttitle": [
+              "Elektrische Felder & Ströme"
+            ],
+            "ccm_taxonid": [
+              "http://w3id.org/openeduhub/vocabs/discipline/460"
+            ],
+            "cm_title": [
+              "Elektrische Felder und elektrische Ströme"
+            ],
+            "ccm_educationalintendedenduserrole": [
+              "http://w3id.org/openeduhub/vocabs/intendedEndUserRole/teacher"
+            ],
+            "ccm_educationalcontext": [
+              "http://w3id.org/openeduhub/vocabs/educationalContext/sekundarstufe_2"
+            ],
+            "cm_description": [
+              "Untersuchung der Eigenschaften elektrischer Felder, Ladungen und deren Bewegung in Leitern, inklusive Stromdichte, Ohmsches Gesetz und Anwendungen in elektrischen Schaltkreisen."
+            ],
+            "cclom_general_keyword": []
+          },
+          "subcollections": [
+            {
+              "title": "Elektrische Felder, Ladungen und Stromfluss in Leitern",
+              "shorttitle": "Elektrische Felder & Ströme",
+              "properties": {
+                "ccm_collectionshorttitle": [
+                  "Elektrische Felder & Ströme"
+                ],
+                "ccm_taxonid": [
+                  "http://w3id.org/openeduhub/vocabs/discipline/460"
+                ],
+                "cm_title": [
+                  "Elektrische Felder, Ladungen und Stromfluss in Leitern"
+                ],
+                "ccm_educationalintendedenduserrole": [
+                  "http://w3id.org/openeduhub/vocabs/intendedEndUserRole/teacher"
+                ],
+                "ccm_educationalcontext": [
+                  "http://w3id.org/openeduhub/vocabs/educationalContext/sekundarstufe_2"
+                ],
+                "cm_description": [
+                  "Dieses Lehrplanthema behandelt die Grundlagen elektrischer Felder und deren Eigenschaften, die Wechselwirkungen zwischen elektrischen Ladungen sowie die Bewegung von Elektronen in Leitern. Es umfasst die Definition und Berechnung von elektrischer Feldstärke, das Konzept der elektrischen Spannung und Stromdichte sowie die Anwendung des Ohmschen Gesetzes zur Beschreibung von Stromfluss in elektrischen Schaltkreisen. Darüber hinaus werden praktische Anwendungen und experimentelle Methoden zur Messung von elektrischen Größen behandelt, um ein tiefes Verständnis der Elektrodynamik im Alltag und in technischen Systemen zu fördern."
+                ],
+                "cclom_general_keyword": []
+              },
+              "subcollections": [],
+              "additional_data": {}
+            }
+          ],
+          "additional_data": {}
+        },
+        {
+          "title": "Magnetismus und elektromagnetische Induktion",
+          "shorttitle": "Magnetismus & Induktion",
+          "properties": {
+            "ccm_collectionshorttitle": [
+              "Magnetismus & Induktion"
+            ],
+            "ccm_taxonid": [
+              "http://w3id.org/openeduhub/vocabs/discipline/460"
+            ],
+            "cm_title": [
+              "Magnetismus und elektromagnetische Induktion"
+            ],
+            "ccm_educationalintendedenduserrole": [
+              "http://w3id.org/openeduhub/vocabs/intendedEndUserRole/teacher"
+            ],
+            "ccm_educationalcontext": [
+              "http://w3id.org/openeduhub/vocabs/educationalContext/sekundarstufe_2"
+            ],
+            "cm_description": [
+              "Analyse magnetischer Felder, magnetischer Kräfte auf bewegte Ladungen und stromdurchflossene Leiter sowie das Prinzip der elektromagnetischen Induktion mit praktischen Anwendungen wie Generatoren und Transformatoren."
+            ],
+            "cclom_general_keyword": []
+          },
+          "subcollections": [
+            {
+              "title": "Magnetische Felder, Lorentzkraft und elektromagnetische Induktion",
+              "shorttitle": "Magnetismus und Induktion",
+              "properties": {
+                "ccm_collectionshorttitle": [
+                  "Magnetismus und Induktion"
+                ],
+                "ccm_taxonid": [
+                  "http://w3id.org/openeduhub/vocabs/discipline/460"
+                ],
+                "cm_title": [
+                  "Magnetische Felder, Lorentzkraft und elektromagnetische Induktion"
+                ],
+                "ccm_educationalintendedenduserrole": [
+                  "http://w3id.org/openeduhub/vocabs/intendedEndUserRole/teacher"
+                ],
+                "ccm_educationalcontext": [
+                  "http://w3id.org/openeduhub/vocabs/educationalContext/sekundarstufe_2"
+                ],
+                "cm_description": [
+                  "Dieses Lehrplanthema behandelt die Analyse von magnetischen Feldern und deren Entstehung durch elektrische Ströme. Es umfasst die Untersuchung der Lorentzkraft auf bewegte Ladungen und stromdurchflossene Leiter im Magnetfeld. Aufbauend darauf wird das Prinzip der elektromagnetischen Induktion eingeführt, wobei der Zusammenhang zwischen zeitlich veränderlichen Magnetfeldern und induzierten Spannungen erläutert wird. Praktische Anwendungen wie Generatoren zur Umwandlung mechanischer in elektrische Energie sowie Transformatoren zur Spannungsanpassung werden exemplarisch behandelt."
+                ],
+                "cclom_general_keyword": []
+              },
+              "subcollections": [],
+              "additional_data": {}
+            }
+          ],
+          "additional_data": {}
+        }
+      ],
+      "additional_data": {}
+    },
+    {
+      "title": "Quantenphysik und Atomphysik",
+      "shorttitle": "Quantenphysik",
+      "properties": {
+        "ccm_collectionshorttitle": [
+          "Quantenphysik"
+        ],
+        "ccm_taxonid": [
+          "http://w3id.org/openeduhub/vocabs/discipline/460"
+        ],
+        "cm_title": [
+          "Quantenphysik und Atomphysik"
+        ],
+        "ccm_educationalintendedenduserrole": [
+          "http://w3id.org/openeduhub/vocabs/intendedEndUserRole/teacher"
+        ],
+        "ccm_educationalcontext": [
+          "http://w3id.org/openeduhub/vocabs/educationalContext/sekundarstufe_2"
+        ],
+        "cm_description": [
+          "Grundlagen der Quantenmechanik, Atommodelle und ihre Bedeutung für moderne Technologien sowie die Beschreibung von Materie auf mikroskopischer Ebene."
+        ],
+        "cclom_general_keyword": []
+      },
+      "subcollections": [
+        {
+          "title": "Grundlagen der Quantenmechanik",
+          "shorttitle": "Quantenmechanik",
+          "properties": {
+            "ccm_collectionshorttitle": [
+              "Quantenmechanik"
+            ],
+            "ccm_taxonid": [
+              "http://w3id.org/openeduhub/vocabs/discipline/460"
+            ],
+            "cm_title": [
+              "Grundlagen der Quantenmechanik"
+            ],
+            "ccm_educationalintendedenduserrole": [
+              "http://w3id.org/openeduhub/vocabs/intendedEndUserRole/teacher"
+            ],
+            "ccm_educationalcontext": [
+              "http://w3id.org/openeduhub/vocabs/educationalContext/sekundarstufe_2"
+            ],
+            "cm_description": [
+              "Einführung in die Prinzipien der Quantenmechanik, einschließlich Wellen-Teilchen-Dualismus, Unschärferelation und Schrödinger-Gleichung, um das Verhalten von Teilchen auf mikroskopischer Ebene zu verstehen."
+            ],
+            "cclom_general_keyword": []
+          },
+          "subcollections": [
+            {
+              "title": "Wellen-Teilchen-Dualismus und die Grundlagen der Quantenmechanik",
+              "shorttitle": "Wellen-Teilchen-Dualismus",
+              "properties": {
+                "ccm_collectionshorttitle": [
+                  "Wellen-Teilchen-Dualismus"
+                ],
+                "ccm_taxonid": [
+                  "http://w3id.org/openeduhub/vocabs/discipline/460"
+                ],
+                "cm_title": [
+                  "Wellen-Teilchen-Dualismus und die Grundlagen der Quantenmechanik"
+                ],
+                "ccm_educationalintendedenduserrole": [
+                  "http://w3id.org/openeduhub/vocabs/intendedEndUserRole/teacher"
+                ],
+                "ccm_educationalcontext": [
+                  "http://w3id.org/openeduhub/vocabs/educationalContext/sekundarstufe_2"
+                ],
+                "cm_description": [
+                  "Dieses Lehrplanthema behandelt die grundlegenden Konzepte des Wellen-Teilchen-Dualismus, einschließlich der experimentellen Nachweise wie dem Doppelspaltexperiment. Es vermittelt, wie Licht und Materie sowohl wellen- als auch teilchenartige Eigenschaften besitzen, und führt die Schüler in die quantenmechanische Beschreibung von Teilchen ein."
+                ],
+                "cclom_general_keyword": []
+              },
+              "subcollections": [],
+              "additional_data": {}
+            },
+            {
+              "title": "Heisenbergsche Unschärferelation und ihre Bedeutung",
+              "shorttitle": "Unschärferelation",
+              "properties": {
+                "ccm_collectionshorttitle": [
+                  "Unschärferelation"
+                ],
+                "ccm_taxonid": [
+                  "http://w3id.org/openeduhub/vocabs/discipline/460"
+                ],
+                "cm_title": [
+                  "Heisenbergsche Unschärferelation und ihre Bedeutung"
+                ],
+                "ccm_educationalintendedenduserrole": [
+                  "http://w3id.org/openeduhub/vocabs/intendedEndUserRole/teacher"
+                ],
+                "ccm_educationalcontext": [
+                  "http://w3id.org/openeduhub/vocabs/educationalContext/sekundarstufe_2"
+                ],
+                "cm_description": [
+                  "In diesem Thema wird die Heisenbergsche Unschärferelation vorgestellt, die fundamentale Grenzen bei der gleichzeitigen Bestimmung von Ort und Impuls eines Teilchens beschreibt. Die Schüler lernen die physikalische Bedeutung und die Konsequenzen dieser Relation für das Verständnis mikroskopischer Systeme kennen."
+                ],
+                "cclom_general_keyword": []
+              },
+              "subcollections": [],
+              "additional_data": {}
+            },
+            {
+              "title": "Die Schrödinger-Gleichung und quantenmechanische Zustände",
+              "shorttitle": "Schrödinger-Gleichung",
+              "properties": {
+                "ccm_collectionshorttitle": [
+                  "Schrödinger-Gleichung"
+                ],
+                "ccm_taxonid": [
+                  "http://w3id.org/openeduhub/vocabs/discipline/460"
+                ],
+                "cm_title": [
+                  "Die Schrödinger-Gleichung und quantenmechanische Zustände"
+                ],
+                "ccm_educationalintendedenduserrole": [
+                  "http://w3id.org/openeduhub/vocabs/intendedEndUserRole/teacher"
+                ],
+                "ccm_educationalcontext": [
+                  "http://w3id.org/openeduhub/vocabs/educationalContext/sekundarstufe_2"
+                ],
+                "cm_description": [
+                  "Dieses Thema führt in die Schrödinger-Gleichung als zentrale Gleichung der Quantenmechanik ein. Die Schüler lernen, wie quantenmechanische Zustände durch Wellenfunktionen beschrieben werden und wie die Schrödinger-Gleichung zur Berechnung von Energiezuständen und Wahrscheinlichkeitsdichten in einfachen Systemen angewandt wird."
+                ],
+                "cclom_general_keyword": []
+              },
+              "subcollections": [],
+              "additional_data": {}
+            }
+          ],
+          "additional_data": {}
+        },
+        {
+          "title": "Atommodelle und ihre Anwendungen",
+          "shorttitle": "Atommodelle",
+          "properties": {
+            "ccm_collectionshorttitle": [
+              "Atommodelle"
+            ],
+            "ccm_taxonid": [
+              "http://w3id.org/openeduhub/vocabs/discipline/460"
+            ],
+            "cm_title": [
+              "Atommodelle und ihre Anwendungen"
+            ],
+            "ccm_educationalintendedenduserrole": [
+              "http://w3id.org/openeduhub/vocabs/intendedEndUserRole/teacher"
+            ],
+            "ccm_educationalcontext": [
+              "http://w3id.org/openeduhub/vocabs/educationalContext/sekundarstufe_2"
+            ],
+            "cm_description": [
+              "Untersuchung verschiedener Atommodelle von Dalton bis zum Bohrschen Modell und deren Bedeutung für die Erklärung atomarer Strukturen sowie deren Einsatz in modernen Technologien wie Halbleitern und Lasern."
+            ],
+            "cclom_general_keyword": []
+          },
+          "subcollections": [
+            {
+              "title": "Entwicklung und Vergleich von Atommodellen",
+              "shorttitle": "Atommodelle",
+              "properties": {
+                "ccm_collectionshorttitle": [
+                  "Atommodelle"
+                ],
+                "ccm_taxonid": [
+                  "http://w3id.org/openeduhub/vocabs/discipline/460"
+                ],
+                "cm_title": [
+                  "Entwicklung und Vergleich von Atommodellen"
+                ],
+                "ccm_educationalintendedenduserrole": [
+                  "http://w3id.org/openeduhub/vocabs/intendedEndUserRole/teacher"
+                ],
+                "ccm_educationalcontext": [
+                  "http://w3id.org/openeduhub/vocabs/educationalContext/sekundarstufe_2"
+                ],
+                "cm_description": [
+                  "Dieses Lehrplanthema behandelt die historische Entwicklung der Atommodelle von Dalton über Thomson, Rutherford bis hin zum Bohrschen Modell. Dabei werden die jeweiligen Annahmen, Experimente und Grenzen der Modelle erläutert und deren Bedeutung für das Verständnis der atomaren Struktur dargestellt."
+                ],
+                "cclom_general_keyword": []
+              },
+              "subcollections": [],
+              "additional_data": {}
+            },
+            {
+              "title": "Quantentheorie im Bohrschen Atommodell",
+              "shorttitle": "Bohrsches Modell",
+              "properties": {
+                "ccm_collectionshorttitle": [
+                  "Bohrsches Modell"
+                ],
+                "ccm_taxonid": [
+                  "http://w3id.org/openeduhub/vocabs/discipline/460"
+                ],
+                "cm_title": [
+                  "Quantentheorie im Bohrschen Atommodell"
+                ],
+                "ccm_educationalintendedenduserrole": [
+                  "http://w3id.org/openeduhub/vocabs/intendedEndUserRole/teacher"
+                ],
+                "ccm_educationalcontext": [
+                  "http://w3id.org/openeduhub/vocabs/educationalContext/sekundarstufe_2"
+                ],
+                "cm_description": [
+                  "Im Fokus steht die Einführung quantenmechanischer Konzepte im Bohrschen Atommodell, insbesondere die Quantisierung von Energieniveaus und Bahnen. Die Schüler lernen, wie diese Prinzipien zur Erklärung von Spektrallinien beitragen und die Grenzen des Modells im Vergleich zur modernen Quantenmechanik."
+                ],
+                "cclom_general_keyword": []
+              },
+              "subcollections": [],
+              "additional_data": {}
+            },
+            {
+              "title": "Anwendungen der Atommodelle in modernen Technologien",
+              "shorttitle": "Anwendungen",
+              "properties": {
+                "ccm_collectionshorttitle": [
+                  "Anwendungen"
+                ],
+                "ccm_taxonid": [
+                  "http://w3id.org/openeduhub/vocabs/discipline/460"
+                ],
+                "cm_title": [
+                  "Anwendungen der Atommodelle in modernen Technologien"
+                ],
+                "ccm_educationalintendedenduserrole": [
+                  "http://w3id.org/openeduhub/vocabs/intendedEndUserRole/teacher"
+                ],
+                "ccm_educationalcontext": [
+                  "http://w3id.org/openeduhub/vocabs/educationalContext/sekundarstufe_2"
+                ],
+                "cm_description": [
+                  "Dieses Thema verbindet die theoretischen Atommodelle mit praktischen Anwendungen, wie z.B. die Rolle des Halbleiter-Atoms in der Elektronik und die Funktionsweise von Lasern basierend auf atomaren Übergängen. Es wird gezeigt, wie atomphysikalisches Wissen in aktuellen Technologien genutzt wird."
+                ],
+                "cclom_general_keyword": []
+              },
+              "subcollections": [],
+              "additional_data": {}
+            }
+          ],
+          "additional_data": {}
+        }
+      ],
+      "additional_data": {}
+    }
+  ],
+  "metadata": {
+    "title": "Themenbaum: Physik in Anlehnung an die Lehrpläne der Sekundarstufe 2",
+    "description": "Automatisch generierter Themenbaum für: Physik in Anlehnung an die Lehrpläne der Sekundarstufe 2",
+    "created_at": "2025-04-17 16:41:18",
+    "settings": {
+      "num_main": 3,
+      "num_sub": 2,
+      "num_lehrplan": 1,
+      "include_general": false,
+      "include_methodik": false,
+      "model": "gpt-4.1-mini"
+    }
+  }
+}

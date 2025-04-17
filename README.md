@@ -1,109 +1,146 @@
 # Topic Generator
 
-Eine Streamlit-Anwendung zur Generierung und Anreicherung von hierarchischen Themenbäumen mit Metadaten, Entitäten und Q&A-Paaren.
-
-## Inhaltsverzeichnis
-- [Features](#features)
-- [Installation](#installation)
-- [Benutzung](#benutzung)
-- [Prozesse im Detail](#prozesse-im-detail)
-- [Datenstruktur](#datenstruktur)
-- [Prompts und Templates](#prompts-und-templates)
-- [API-Nutzung](#api-nutzung)
+Eine modulare Streamlit-Anwendung zur Generierung und Anreicherung von hierarchischen Themenbäumen mit Metadaten, Entitäten und Frage-Antwort-Paaren. Die App nutzt OpenAI-Sprachmodelle, um didaktisch wertvolle Inhalte für den Bildungsbereich zu erstellen.
 
 ## Features
 
-- **Themenbaum-Generierung**: Erstellt hierarchische Themenbäume basierend auf einem Hauptthema
-- **Metadaten-Anreicherung**: Fügt Beschreibungen, Schlagworte und Bildungskontexte hinzu
-- **Entitäten-Verlinkung**: Identifiziert und verlinkt Entitäten mit Wikipedia/Wikidata
-- **Q&A-Generierung**: Erstellt Frage-Antwort-Paare für jeden Knoten im Themenbaum
-- **Compendium-Generierung**: Erzeugt ausführliche Lehrtexte für jeden Knoten
-- **Fortschrittsanzeige**: Visualisiert den Generierungsprozess in Echtzeit
+- **Modulare Architektur**: Klar strukturierte Codebasis für bessere Wartbarkeit und Erweiterbarkeit
+- **Themenbaum-Generierung**: Erstellt hierarchische Themenbäume mit zwei Methoden:
+  - **Einmal-Generierung**: Schnelle Erstellung des gesamten Baums in einem Durchgang
+  - **Iterative Generierung**: Schrittweise Erstellung mit detaillierteren Ergebnissen
+- **Kompendien-Generierung**: Erzeugt ausführliche Lehrtexte für jeden Knoten im Themenbaum
+- **Entitäten-Extraktion**: Automatische Identifikation und Verlinkung von Entitäten mit Wikipedia/Wikidata
+- **Q&A-Generierung**: Erstellt kontextbezogene Frage-Antwort-Paare für jeden Themenbaumknoten
+- **Fortgeschrittene LLM-Integration**: Unterstützung für moderne OpenAI-Modelle (gpt-4o, gpt-4o-mini, gpt-4.1, gpt-4.1-mini)
+- **Intuitive Benutzeroberfläche**: Streamlit-basiertes UI mit Fortschrittsanzeigen, Vorschaufunktionen und Exportmöglichkeiten
+
+## Inhaltsverzeichnis
+- [Installation](#installation)
+- [Projektstruktur](#projektstruktur)
+- [Benutzung](#benutzung)
+- [Module im Detail](#module-im-detail)
+- [Datenstruktur](#datenstruktur)
+- [Abhängigkeiten](#abhängigkeiten)
+- [Anpassung und Erweiterung](#anpassung-und-erweiterung)
 
 ## Installation
 
-1. Klone das Repository:
+1. **Repository klonen**:
 ```bash
-git clone [repository-url]
-cd topicgenerator
+git clone https://github.com/janschachtschabel/topictreegenerator
+cd topictreegenerator
 ```
 
-2. Installiere die Abhängigkeiten:
+2. **Python-Umgebung einrichten** (Python 3.9+ empfohlen):
+```bash
+python -m venv venv
+source venv/bin/activate  # Unter Windows: venv\Scripts\activate
+```
+
+3. **Abhängigkeiten installieren**:
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Starte die Anwendung:
+4. **API-Key konfigurieren**:
+   - Erstelle eine `.env`-Datei im Projektverzeichnis
+   - Füge `OPENAI_API_KEY=dein_api_key` hinzu
+
+5. **Anwendung starten**:
 ```bash
 streamlit run app.py
 ```
 
+## Projektstruktur
+
+Die App verwendet eine modulare Architektur für bessere Wartbarkeit:
+
+```
+themenbaum-generator/
+├── app.py                  # Hauptanwendung und UI
+├── modules/                # Funktionsmodule
+│   ├── models.py           # Pydantic-Datenmodelle
+│   ├── utils.py            # Hilfsfunktionen und -klassen
+│   ├── themenbaum_generator.py  # Themenbaum-Erzeugung
+│   ├── kompendium_generator.py  # Kompendium-Erzeugung
+│   └── qa_generator.py     # Q&A-Paar-Erzeugung
+├── entityextractor/        # Entitäten-Extraktionsmodul
+├── data/                   # Speicherort für generierte JSON-Dateien
+└── requirements.txt        # Projektabhängigkeiten
+```
+
 ## Benutzung
 
-### 1. Themenbaum Generierung
+### 1. Themenbaum erstellen
 
-1. Öffne die Anwendung im Browser
-2. Wähle "Themenbaum generieren"
-3. Gib die folgenden Parameter ein:
-   - Hauptthema (z.B. "Physik Sekundarstufe II")
-   - Bildungsstufe
-   - Bildungssektor
-   - Fachbereich
-   - Strukturparameter (Anzahl der Haupt-/Unterthemen)
-4. Klicke auf "Generieren"
+1. Öffne die Anwendung im Browser (http://localhost:8501)
+2. Gib ein Themenbaumthema ein (z.B. "Physik in Anlehnung an die Lehrpläne der Sekundarstufe 2")
+3. Konfiguriere die Parameter:
+   - Anzahl Hauptthemen, Fachthemen und Lehrplanthemen
+   - Optionale Spezialthemen ("Allgemeines", "Methodik und Didaktik")
+   - Fachbereich, Bildungsstufe und Bildungssektor
+   - Generierungsmodus (Einmal vs. Iterativ)
+4. Klicke auf "Themenbaum generieren"
 
-### 2. Metadaten Anreicherung
+### 2. Kompendium generieren
 
-1. Lade einen generierten Themenbaum
-2. Wähle "Metadaten anreichern"
-3. Die Anwendung fügt automatisch hinzu:
-   - Beschreibungen für jeden Knoten
-   - Schlagworte
-   - Bildungskontexte
-   - Kurztitel
+1. Wähle "Kompendium generieren" im Menü
+2. Wähle einen erstellten Themenbaum aus
+3. Definiere Optionen für die Kompendiumserstellung:
+   - Knoten auswählen
+   - Entitäten extrahieren (aktivieren/deaktivieren)
+   - KI-Modell auswählen
+4. Starte die Generierung und überwache den Fortschritt
 
-### 3. Entitäten-Verlinkung
+### 3. Q&A-Paare erstellen
 
-1. Wähle "Entitäten verlinken"
-2. Die App:
-   - Identifiziert wichtige Entitäten
-   - Sucht passende Wikipedia-Artikel
-   - Verlinkt mit Wikidata
-   - Extrahiert relevante Inhalte
-
-### 4. Q&A-Generierung
-
-1. Wähle "Q&A generieren"
-2. Konfiguriere:
+1. Wähle "Q&A generieren" im Menü
+2. Wähle einen vorhandenen Themenbaum aus
+3. Konfiguriere Optionen:
    - Anzahl der Fragen pro Knoten
-   - Einbeziehung von Compendium/Entitäten
-3. Starte den Prozess
+   - Kompendium einbeziehen (falls verfügbar)
+   - Entitäten berücksichtigen (falls extrahiert)
+4. Starte die Generierung
 
-## Prozesse im Detail
+### 4. Dateivorschau
 
-### Themenbaum-Generierung
+- Nutze die "Dateivorschau"-Funktion, um erstellte Themenbäume zu inspizieren
+- Wähle zwischen verschiedenen Ansichtsmodi:
+  - Strukturierte Ansicht
+  - JSON-Rohdaten
+  - Entitäten-Details
 
-1. **Initiale Strukturierung**
-   - Hauptthemen werden basierend auf dem Fachbereich erstellt
-   - Unterthemen folgen didaktischen Prinzipien
-   - Lehrplanthemen orientieren sich an Bildungsstandards
+## Module im Detail
 
-2. **Metadaten-Generierung**
-   - Beschreibungen werden kontextuell generiert
-   - Schlagworte basieren auf Fachinhalten
-   - Bildungskontexte werden aus der Struktur abgeleitet
+### models.py
+Enthält die Pydantic-Datenmodelle für die strukturierte Datenhaltung:
+- `Properties`: Metadaten-Container für Sammlungen
+- `Collection`: Repräsentiert einen Knoten im Themenbaum
+- `TopicTree`: Hauptcontainer für den gesamten Themenbaum
+- `QAPair` und `QACollection`: Strukturen für Frage-Antwort-Paare
 
-3. **Entitäten-Verarbeitung**
-   - Named Entity Recognition für Fachbegriffe
-   - Wikipedia-API für Artikelsuche
-   - Wikidata-Integration für strukturierte Daten
-   - Extraktion relevanter Textpassagen
+### themenbaum_generator.py
+Funktionen zur Erstellung von Themenbäumen:
+- `generate_topic_tree`: Einmalige Generierung des gesamten Baums
+- `generate_topic_tree_iterative`: Schrittweise Generierung mit Zwischenfeedback
+- `create_properties`: Hilfsfunktion zur Eigenschaftenerstellung
 
-4. **Q&A-Generierung**
-   - Rekursive Verarbeitung aller Knoten
-   - Berücksichtigung von Kontext und Metadaten
-   - Integration von Compendium-Texten
-   - Einbeziehung von Entitäts-Informationen
+### kompendium_generator.py
+Funktionen zur Erstellung von kompendialen Texten:
+- `generate_extended_text`: Erstellt ausführliche Texte zu jedem Knoten
+- `extract_entities`: Identifiziert relevante Entitäten im Text
+- `generate_compendium_text`: Erstellt strukturierte Kompendien
+
+### qa_generator.py
+Funktionen zur Erstellung von Frage-Antwort-Paaren:
+- `generate_qa_pairs`: Erstellt kontextbezogene Fragen und Antworten
+- `process_node_qa`: Verarbeitet QA-Generierung für einen Knoten und seine Unterknoten
+
+### utils.py
+Hilfsfunktionen für die gesamte Anwendung:
+- JSON-Verarbeitung
+- OpenAI-API-Konfiguration
+- Datei-Management
 
 ## Datenstruktur
 
@@ -154,160 +191,39 @@ streamlit run app.py
 }
 ```
 
-## Prompts und Templates
+## Abhängigkeiten
 
-### Themenbaum-Generierung
+Hauptabhängigkeiten:
+- **streamlit**: Für die Benutzeroberfläche
+- **openai**: API-Client für OpenAI-Modelle (GPT-4o, GPT-4.1, etc.)
+- **pydantic**: Datenvalidierung und -struktur
+- **python-dotenv**: Umgebungsvariablen-Management
+- **urllib3**: HTTP-Client für den Entityextractor
+- **backoff**: Robust gegenüber API-Ratenlimits
 
-#### Hauptprompt
-```
-Erstelle einen hierarchischen Themenbaum für {themenbaumthema} mit {hauptthemen} Hauptthemen.
-Jedes Hauptthema soll {unterthemen_pro_hauptthema} Unterthemen haben.
-Jedes Unterthema soll {lehrplanthemen_pro_unterthema} Lehrplanthemen enthalten.
+Die vollständige Liste der Abhängigkeiten finden Sie in `requirements.txt`.
 
-Berücksichtige:
-- Bildungsstufe: {bildungsstufe}
-- Bildungssektor: {bildungssektor}
-- Fachbereich: {fachbereich}
+## Anpassung und Erweiterung
 
-Strukturiere die Themen didaktisch sinnvoll und baue sie aufeinander auf.
-Die Themen sollen dem aktuellen Stand der Wissenschaft und den Bildungsstandards entsprechen.
-```
+### Anpassung der Prompts
 
-#### Metadaten-Prompt
-```
-Generiere Metadaten für das Thema "{title}".
+Die Anwendung verwendet verschiedene Prompt-Templates für die Generierung. Diese können in den jeweiligen Modulen angepasst werden:
+- `themenbaum_generator.py`: Templates für Themenbaum-Generierung
+- `kompendium_generator.py`: Templates für Kompendium-Erstellung
+- `qa_generator.py`: Templates für Frage-Antwort-Paare
 
-Erstelle:
-1. Eine kurze, prägnante Beschreibung (2-3 Sätze)
-2. 3-5 relevante Schlagworte
-3. Einen Kurztitel (max. 3 Wörter)
+### Hinzufügen neuer LLM-Modelle
 
-Berücksichtige dabei:
-- Bildungskontext: {bildungskontext}
-- Zielgruppe: {zielgruppe}
-- Fachbereich: {fachbereich}
+Neue OpenAI-Modelle können leicht hinzugefügt werden:
+1. Erweitern Sie die Modellliste in der Seitenleiste von `app.py`
+2. Die Modellauswahl wird automatisch auf alle Module angewendet
 
-Die Beschreibung soll:
-- Die wichtigsten Aspekte des Themas hervorheben
-- Die Relevanz für die Zielgruppe aufzeigen
-- Fachlich korrekt und verständlich sein
-```
+### Integration weiterer Wissensdatenbanken
 
-### Compendium-Generierung
-
-#### Compendium-Prompt
-```
-Erstelle einen ausführlichen Lehrtext zum Thema "{title}".
-
-Der Text soll:
-1. Die wichtigsten Konzepte und Prinzipien erklären
-2. Fachbegriffe einführen und erläutern
-3. Zusammenhänge zu anderen Themen aufzeigen
-4. Beispiele und Anwendungen enthalten
-
-Berücksichtige:
-- Bildungsstufe: {bildungsstufe}
-- Vorwissen: {vorwissen}
-- Lernziele: {lernziele}
-
-Strukturiere den Text didaktisch sinnvoll und verwende eine klare, präzise Sprache.
-```
-
-### Entitäten-Verarbeitung
-
-#### Entitäten-Prompt
-```
-Identifiziere die wichtigsten Fachbegriffe und Konzepte im Text:
-
-{text}
-
-Für jeden Begriff:
-1. Bestimme die Entitätsklasse (z.B. Physikalisches Gesetz, Mathematisches Konzept)
-2. Gib den Wikipedia-Artikel an
-3. Extrahiere die relevanten Informationen aus dem Wikipedia-Artikel
-
-Berücksichtige:
-- Fachbereich: {fachbereich}
-- Bildungsstufe: {bildungsstufe}
-```
-
-### Q&A-Generierung
-
-#### Q&A-Prompt
-```
-Erstelle {num_questions} Frage-Antwort-Paare zum Thema "{title}".
-
-Nutze folgende Informationen:
-1. Compendium: {compendium_text}
-2. Entitäten: {entities_info}
-3. Metadaten: {metadata}
-
-Die Fragen sollen:
-- Verschiedene kognitive Niveaus abdecken (Wissen, Verstehen, Anwenden)
-- Klar und eindeutig formuliert sein
-- Dem Bildungsniveau entsprechen
-
-Die Antworten sollen:
-- Präzise und fachlich korrekt sein
-- Die wichtigsten Aspekte abdecken
-- Verständlich formuliert sein
-```
-
-### Verwendung der Prompts
-
-1. **Sequenzielle Verarbeitung**
-   - Themenbaum → Metadaten → Compendium → Entitäten → Q&A
-   - Jeder Schritt baut auf den vorherigen auf
-   - Informationen werden kumulativ genutzt
-
-2. **Kontextuelle Anreicherung**
-   - Metadaten fließen in Compendium ein
-   - Compendium wird für Entitäten genutzt
-   - Alles zusammen für Q&A-Generierung
-
-3. **Qualitätssicherung**
-   - Prompts enthalten Qualitätskriterien
-   - Bildungskontext wird durchgängig berücksichtigt
-   - Fachliche Korrektheit wird priorisiert
-
-4. **Anpassung der Prompts**
-   - Templates können angepasst werden
-   - Parameter sind konfigurierbar
-   - Qualitätskriterien können erweitert werden
-
-## API-Nutzung
-
-### OpenAI API
-- Verwendet für:
-  - Themenbaum-Generierung
-  - Metadaten-Erstellung
-  - Q&A-Generierung
-- Modell: GPT-4
-- Authentifizierung über API-Key
-
-### Wikipedia/Wikidata APIs
-- Wikipedia-API für Artikelsuche
-- Wikidata-API für strukturierte Daten
-- Rate-Limiting beachten
-- Caching implementiert
-
-## Best Practices
-
-1. **Themenbaum-Generierung**
-   - Wähle präzise Hauptthemen
-   - Beachte didaktische Progression
-   - Limitiere die Hierarchietiefe
-
-2. **Q&A-Generierung**
-   - Nutze Compendium für Kontext
-   - Beziehe Entitäten ein
-   - Prüfe die Ausgabe
-
-3. **Fehlerbehebung**
-   - Überprüfe API-Keys
-   - Beachte Rate-Limits
-   - Nutze Logging-Informationen
+Der Entityextractor kann um weitere Wissensdatenbanken erweitert werden:
+1. Implementieren Sie einen neuen Connector im `entityextractor`-Modul
+2. Registrieren Sie die neue Datenquelle in der Konfiguration
 
 ## Lizenz
 
-- Apache 2.0 Lizenz
+Apache 2.0
