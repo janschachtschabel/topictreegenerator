@@ -94,14 +94,12 @@ Extrahierte Entitäten mit Details:
 ## Dokumentstruktur
 - Verwenden Sie Markdown-Überschriften (`#`, `##`, `###`) für Haupt- und Unterabschnitte und gliedern Sie den Text in mindestens fünf Hauptabschnitte mit jeweils 4–5 Sätzen pro Absatz.
 - Gliedern Sie den Text in mindestens fünf Hauptabschnitte mit jeweils 4–5 Sätzen pro Absatz.
-- Fügen Sie am Ende jedes Entitätsabschnitts Quellenangaben als Markdown-Links ein: Wikipedia-Link, Wikidata-Link, DBpedia-Link.
 
 ## Stilrichtlinien
 - Verfassen Sie den Text in formeller, akademischer Sprache
 - Verwenden Sie Fettdruck nur sparsam für zentrale Fachbegriffe
 - Konvertieren Sie Listen in ausformulierte Absätze
 - Fassen Sie vergleichende Daten in Tabellen zusammen
-- Fügen Sie am Ende jedes Entitätsabschnitts Quellenangaben als Markdown-Links ein: Wikipedia-Link, Wikidata-Link, DBpedia-Link.
 
 ## Personalisierung
 - Folgen Sie Nutzerwünschen im Rahmen obiger Regeln
