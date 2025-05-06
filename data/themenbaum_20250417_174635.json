@@ -1,0 +1,291 @@
+{
+  "collection": [
+    {
+      "title": "Mechanik und Thermodynamik",
+      "shorttitle": "Mechanik & Thermo",
+      "properties": {
+        "ccm_collectionshorttitle": [
+          "Mechanik & Thermo"
+        ],
+        "ccm_taxonid": [
+          "http://w3id.org/openeduhub/vocabs/discipline/460"
+        ],
+        "cm_title": [
+          "Mechanik und Thermodynamik"
+        ],
+        "ccm_educationalintendedenduserrole": [
+          "http://w3id.org/openeduhub/vocabs/intendedEndUserRole/teacher"
+        ],
+        "ccm_educationalcontext": [
+          "http://w3id.org/openeduhub/vocabs/educationalContext/sekundarstufe_2"
+        ],
+        "cm_description": [
+          "Dieses Hauptthema behandelt die Grundlagen der klassischen Mechanik, einschließlich Bewegungsgesetze, Kräfte, Energie und Impuls sowie die Prinzipien der Thermodynamik wie Energieumwandlung, Wärme und Entropie."
+        ],
+        "cclom_general_keyword": []
+      },
+      "subcollections": [
+        {
+          "title": "Kinematik und Dynamik der Bewegung",
+          "shorttitle": "Bewegungslehre",
+          "properties": {
+            "ccm_collectionshorttitle": [
+              "Bewegungslehre"
+            ],
+            "ccm_taxonid": [
+              "http://w3id.org/openeduhub/vocabs/discipline/460"
+            ],
+            "cm_title": [
+              "Kinematik und Dynamik der Bewegung"
+            ],
+            "ccm_educationalintendedenduserrole": [
+              "http://w3id.org/openeduhub/vocabs/intendedEndUserRole/teacher"
+            ],
+            "ccm_educationalcontext": [
+              "http://w3id.org/openeduhub/vocabs/educationalContext/sekundarstufe_2"
+            ],
+            "cm_description": [
+              "Dieses Fachthema behandelt die Grundlagen der Bewegung von Körpern, einschließlich der Beschreibung von Bahn, Geschwindigkeit und Beschleunigung sowie der Analyse der auf Körper wirkenden Kräfte und deren Auswirkungen gemäß den Newtonschen Gesetzen."
+            ],
+            "cclom_general_keyword": []
+          },
+          "subcollections": [
+            {
+              "title": "Grundlagen der Kinematik: Bewegungsbeschreibung und -größen",
+              "shorttitle": "Kinematik Grundlagen",
+              "properties": {
+                "ccm_collectionshorttitle": [
+                  "Kinematik Grundlagen"
+                ],
+                "ccm_taxonid": [
+                  "http://w3id.org/openeduhub/vocabs/discipline/460"
+                ],
+                "cm_title": [
+                  "Grundlagen der Kinematik: Bewegungsbeschreibung und -größen"
+                ],
+                "ccm_educationalintendedenduserrole": [
+                  "http://w3id.org/openeduhub/vocabs/intendedEndUserRole/teacher"
+                ],
+                "ccm_educationalcontext": [
+                  "http://w3id.org/openeduhub/vocabs/educationalContext/sekundarstufe_2"
+                ],
+                "cm_description": [
+                  "Dieses Lehrplanthema behandelt die grundlegenden Konzepte der Kinematik, einschließlich der Beschreibung von Bahn, Weg, Geschwindigkeit und Beschleunigung in verschiedenen Bewegungsformen (geradlinig, gleichmäßig, gleichmäßig beschleunigt). Zudem werden Zeitabhängigkeiten und graphische Darstellungen von Bewegungen eingeführt."
+                ],
+                "cclom_general_keyword": []
+              },
+              "subcollections": [],
+              "additional_data": {}
+            },
+            {
+              "title": "Analyse der Dynamik: Kräfte und Newtonsche Gesetze",
+              "shorttitle": "Dynamik und Kräfte",
+              "properties": {
+                "ccm_collectionshorttitle": [
+                  "Dynamik und Kräfte"
+                ],
+                "ccm_taxonid": [
+                  "http://w3id.org/openeduhub/vocabs/discipline/460"
+                ],
+                "cm_title": [
+                  "Analyse der Dynamik: Kräfte und Newtonsche Gesetze"
+                ],
+                "ccm_educationalintendedenduserrole": [
+                  "http://w3id.org/openeduhub/vocabs/intendedEndUserRole/teacher"
+                ],
+                "ccm_educationalcontext": [
+                  "http://w3id.org/openeduhub/vocabs/educationalContext/sekundarstufe_2"
+                ],
+                "cm_description": [
+                  "In diesem Themenbereich werden die Newtonschen Gesetze vorgestellt und angewandt, um die Wirkung von Kräften auf Körper zu analysieren. Schwerpunkt liegt auf der Untersuchung von Bewegungsänderungen durch Kräfte, der Kraftzusammensetzung sowie auf dem Verständnis von Masse, Trägheit und Wechselwirkungen."
+                ],
+                "cclom_general_keyword": []
+              },
+              "subcollections": [],
+              "additional_data": {}
+            },
+            {
+              "title": "Anwendung der Kinematik und Dynamik auf reale Bewegungen",
+              "shorttitle": "Anwendungen Bewegung",
+              "properties": {
+                "ccm_collectionshorttitle": [
+                  "Anwendungen Bewegung"
+                ],
+                "ccm_taxonid": [
+                  "http://w3id.org/openeduhub/vocabs/discipline/460"
+                ],
+                "cm_title": [
+                  "Anwendung der Kinematik und Dynamik auf reale Bewegungen"
+                ],
+                "ccm_educationalintendedenduserrole": [
+                  "http://w3id.org/openeduhub/vocabs/intendedEndUserRole/teacher"
+                ],
+                "ccm_educationalcontext": [
+                  "http://w3id.org/openeduhub/vocabs/educationalContext/sekundarstufe_2"
+                ],
+                "cm_description": [
+                  "Dieses Thema verbindet Kinematik und Dynamik anhand von realen Beispielaufgaben wie schrägen Ebenen, Kreisbewegungen und freien Fall. Dabei werden Bewegungsgleichungen hergeleitet und Kräfte analysiert, um praktische Probleme aus dem Alltag und der Technik zu lösen."
+                ],
+                "cclom_general_keyword": []
+              },
+              "subcollections": [],
+              "additional_data": {}
+            }
+          ],
+          "additional_data": {}
+        }
+      ],
+      "additional_data": {}
+    },
+    {
+      "title": "Elektrizitätslehre und Magnetismus",
+      "shorttitle": "Elektro & Magnetismus",
+      "properties": {
+        "ccm_collectionshorttitle": [
+          "Elektro & Magnetismus"
+        ],
+        "ccm_taxonid": [
+          "http://w3id.org/openeduhub/vocabs/discipline/460"
+        ],
+        "cm_title": [
+          "Elektrizitätslehre und Magnetismus"
+        ],
+        "ccm_educationalintendedenduserrole": [
+          "http://w3id.org/openeduhub/vocabs/intendedEndUserRole/teacher"
+        ],
+        "ccm_educationalcontext": [
+          "http://w3id.org/openeduhub/vocabs/educationalContext/sekundarstufe_2"
+        ],
+        "cm_description": [
+          "Dieses Hauptthema umfasst die Grundlagen der Elektrizitätslehre, elektrische Felder, Stromkreise, elektromagnetische Induktion und die Wechselwirkungen zwischen elektrischen und magnetischen Feldern."
+        ],
+        "cclom_general_keyword": []
+      },
+      "subcollections": [
+        {
+          "title": "Elektromagnetische Induktion und Anwendungen",
+          "shorttitle": "Elektromagnetische Induktion",
+          "properties": {
+            "ccm_collectionshorttitle": [
+              "Elektromagnetische Induktion"
+            ],
+            "ccm_taxonid": [
+              "http://w3id.org/openeduhub/vocabs/discipline/460"
+            ],
+            "cm_title": [
+              "Elektromagnetische Induktion und Anwendungen"
+            ],
+            "ccm_educationalintendedenduserrole": [
+              "http://w3id.org/openeduhub/vocabs/intendedEndUserRole/teacher"
+            ],
+            "ccm_educationalcontext": [
+              "http://w3id.org/openeduhub/vocabs/educationalContext/sekundarstufe_2"
+            ],
+            "cm_description": [
+              "Dieses Fachthema behandelt die physikalischen Grundlagen der elektromagnetischen Induktion, erklärt Faradays Gesetz und Lenzsche Regel und zeigt praktische Anwendungen wie Transformatoren, Generatoren und Induktionsherde auf."
+            ],
+            "cclom_general_keyword": []
+          },
+          "subcollections": [
+            {
+              "title": "Grundlagen der elektromagnetischen Induktion und Faradaysches Gesetz",
+              "shorttitle": "Elektromagnetische Induktion",
+              "properties": {
+                "ccm_collectionshorttitle": [
+                  "Elektromagnetische Induktion"
+                ],
+                "ccm_taxonid": [
+                  "http://w3id.org/openeduhub/vocabs/discipline/460"
+                ],
+                "cm_title": [
+                  "Grundlagen der elektromagnetischen Induktion und Faradaysches Gesetz"
+                ],
+                "ccm_educationalintendedenduserrole": [
+                  "http://w3id.org/openeduhub/vocabs/intendedEndUserRole/teacher"
+                ],
+                "ccm_educationalcontext": [
+                  "http://w3id.org/openeduhub/vocabs/educationalContext/sekundarstufe_2"
+                ],
+                "cm_description": [
+                  "Dieses Lehrplanthema behandelt die physikalischen Grundlagen der elektromagnetischen Induktion, insbesondere das Faradaysche Gesetz, das die Entstehung einer induzierten Spannung durch zeitliche Änderung des magnetischen Flusses beschreibt. Es umfasst die experimentelle Herleitung, mathematische Formulierung und die Erklärung der Lenzschen Regel zur Bestimmung der Richtung der induzierten Spannung."
+                ],
+                "cclom_general_keyword": []
+              },
+              "subcollections": [],
+              "additional_data": {}
+            },
+            {
+              "title": "Anwendungen der elektromagnetischen Induktion: Transformatoren und Generatoren",
+              "shorttitle": "Transformatoren & Generatoren",
+              "properties": {
+                "ccm_collectionshorttitle": [
+                  "Transformatoren & Generatoren"
+                ],
+                "ccm_taxonid": [
+                  "http://w3id.org/openeduhub/vocabs/discipline/460"
+                ],
+                "cm_title": [
+                  "Anwendungen der elektromagnetischen Induktion: Transformatoren und Generatoren"
+                ],
+                "ccm_educationalintendedenduserrole": [
+                  "http://w3id.org/openeduhub/vocabs/intendedEndUserRole/teacher"
+                ],
+                "ccm_educationalcontext": [
+                  "http://w3id.org/openeduhub/vocabs/educationalContext/sekundarstufe_2"
+                ],
+                "cm_description": [
+                  "In diesem Thema werden praktische Anwendungen der elektromagnetischen Induktion behandelt. Es umfasst den Aufbau und die Funktionsweise von Transformatoren zur Spannungswandlung sowie von elektrischen Generatoren zur Umwandlung mechanischer in elektrische Energie. Dabei werden Wirkungsweise, Energieerhaltung und Wirkungsgrade erläutert."
+                ],
+                "cclom_general_keyword": []
+              },
+              "subcollections": [],
+              "additional_data": {}
+            },
+            {
+              "title": "Induktionsherde und weitere technische Anwendungen der elektromagnetischen Induktion",
+              "shorttitle": "Induktionsherde & Technik",
+              "properties": {
+                "ccm_collectionshorttitle": [
+                  "Induktionsherde & Technik"
+                ],
+                "ccm_taxonid": [
+                  "http://w3id.org/openeduhub/vocabs/discipline/460"
+                ],
+                "cm_title": [
+                  "Induktionsherde und weitere technische Anwendungen der elektromagnetischen Induktion"
+                ],
+                "ccm_educationalintendedenduserrole": [
+                  "http://w3id.org/openeduhub/vocabs/intendedEndUserRole/teacher"
+                ],
+                "ccm_educationalcontext": [
+                  "http://w3id.org/openeduhub/vocabs/educationalContext/sekundarstufe_2"
+                ],
+                "cm_description": [
+                  "Dieses Thema widmet sich weiteren technologischen Anwendungen der elektromagnetischen Induktion, insbesondere dem Induktionsherd als Beispiel zur Nutzung induzierter Wirbelströme zur Erzeugung von Wärme. Ergänzend werden weitere Anwendungen wie Bremsen durch Wirbelströme und induktive Energieübertragung vorgestellt."
+                ],
+                "cclom_general_keyword": []
+              },
+              "subcollections": [],
+              "additional_data": {}
+            }
+          ],
+          "additional_data": {}
+        }
+      ],
+      "additional_data": {}
+    }
+  ],
+  "metadata": {
+    "title": "Themenbaum: Physik in Anlehnung an die Lehrpläne der Sekundarstufe 2",
+    "description": "Automatisch generierter Themenbaum für: Physik in Anlehnung an die Lehrpläne der Sekundarstufe 2",
+    "created_at": "2025-04-17 17:46:14",
+    "settings": {
+      "num_main": 2,
+      "num_sub": 1,
+      "num_lehrplan": 1,
+      "include_general": false,
+      "include_methodik": false,
+      "model": "gpt-4.1-mini"
+    }
+  }
+}

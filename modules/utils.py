@@ -93,8 +93,9 @@ def count_nodes(node: dict) -> int:
     return count
 
 def get_entity_extractor_config(openai_key: str, model: str = "gpt-4.1-mini", language: str = "de", 
-                               use_wikidata: bool = True, use_dbpedia: bool = True, 
-                               dbpedia_use_de: bool = True, show_status: bool = False) -> dict:
+                               use_wikidata: bool = False, use_dbpedia: bool = False, 
+                               dbpedia_use_de: bool = True, show_status: bool = False,
+                               enable_entity_inference: bool = False, extract_relations: bool = False) -> dict:
     """
     Erstellt eine Standardkonfiguration für den EntityExtractor basierend auf den UI-Einstellungen.
     
@@ -106,12 +107,14 @@ def get_entity_extractor_config(openai_key: str, model: str = "gpt-4.1-mini", la
         use_dbpedia: DBpedia API verwenden
         dbpedia_use_de: Deutsche DBpedia verwenden
         show_status: Status-Nachrichten anzeigen
+        enable_entity_inference: Entitätsschlussfolgerung aktivieren
+        extract_relations: Relationsextraktion aktivieren
         
     Returns:
         dict: Konfigurationsobjekt für den EntityExtractor
     """
     return {
-        "USE_WIKIPEDIA": True,     # Immer True, Wikipedia ist Pflicht
+        "USE_WIKIPEDIA": True,                   # Pflicht
         "USE_WIKIDATA": use_wikidata,
         "USE_DBPEDIA": use_dbpedia,
         "DBPEDIA_USE_DE": dbpedia_use_de,
@@ -121,5 +124,10 @@ def get_entity_extractor_config(openai_key: str, model: str = "gpt-4.1-mini", la
         "LANGUAGE": language,
         "SHOW_STATUS": show_status,
         "SUPPRESS_TLS_WARNINGS": True,
-        "COLLECT_TRAINING_DATA": False
+        "COLLECT_TRAINING_DATA": False,
+        "MAX_ENTITIES": 10,                     # Bis zu 10 Entitäten
+        "ENABLE_ENTITY_INFERENCE": enable_entity_inference,
+        "RELATION_EXTRACTION": extract_relations,
+        "ENABLE_RELATIONS_INFERENCE": False,
+        "ENABLE_GRAPH_VISUALIZATION": False
     }
