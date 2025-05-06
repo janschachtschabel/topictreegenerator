@@ -10,7 +10,6 @@ import re
 import requests
 from bs4 import BeautifulSoup
 import urllib.parse
-import wptools
 import os
 import json
 import hashlib
