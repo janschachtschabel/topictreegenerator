@@ -10,6 +10,7 @@ import re
 import requests
 from bs4 import BeautifulSoup
 import urllib.parse
+# import wptools
 import os
 import json
 import hashlib
@@ -268,8 +269,10 @@ def get_wikipedia_extract(wikipedia_url, config=None):
         cache_path = get_cache_path(config.get("CACHE_DIR", "cache"), "wikipedia", wikipedia_url)
         cached = load_cache(cache_path)
         if cached is not None:
-            logging.debug(f"Loaded Wikipedia extract cache for {wikipedia_url}")
+            logging.info(f"Loaded Wikipedia extract from cache for {wikipedia_url}")
             return cached.get("extract"), cached.get("wikidata_id")
+        else:
+            logging.info(f"No Wikipedia extract cache found for {wikipedia_url}, fetching from API")
         
     try:
         splitted = wikipedia_url.split("/wiki/")
@@ -317,7 +320,7 @@ def get_wikipedia_extract(wikipedia_url, config=None):
                 # Save cache
                 if config.get("CACHE_ENABLED") and config.get("CACHE_WIKIPEDIA_ENABLED"):
                     save_cache(cache_path, {"extract": extract_text, "wikidata_id": wikidata_id})
-                    logging.debug(f"Saved Wikipedia extract cache for {wikipedia_url}")
+                    logging.info(f"Saved Wikipedia extract cache for {wikipedia_url}")
                 return extract_text, wikidata_id
         # Kein Extract gefunden: Prüfe Softredirect vor Opensearch
         logging.warning(f"No Wikipedia extract found for URL {wikipedia_url}. Checking softredirect first...")

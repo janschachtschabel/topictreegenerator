@@ -18,6 +18,7 @@ from entityextractor.prompts.extract_prompts import (
     USER_PROMPT_EN, USER_PROMPT_DE,
     TYPE_RESTRICTION_TEMPLATE_EN, TYPE_RESTRICTION_TEMPLATE_DE
 )
+from entityextractor.utils.prompt_utils import apply_type_restrictions
 
 def extract_entities_with_openai(text, config=None):
     """
@@ -64,13 +65,7 @@ def extract_entities_with_openai(text, config=None):
     
     # Build system prompt and user message
     system_prompt = get_system_prompt_en(max_entities) if language == "en" else get_system_prompt_de(max_entities)
-    if allowed_entity_types != "auto":
-        entity_types_list = [t.strip() for t in allowed_entity_types.split(",")]
-        entity_types_str = ", ".join(entity_types_list)
-        if language == "en":
-            system_prompt += TYPE_RESTRICTION_TEMPLATE_EN.format(entity_types=entity_types_str)
-        else:
-            system_prompt += TYPE_RESTRICTION_TEMPLATE_DE.format(entity_types=entity_types_str)
+    system_prompt = apply_type_restrictions(system_prompt, allowed_entity_types, language)
     user_msg = USER_PROMPT_EN.format(text=text) if language == "en" else USER_PROMPT_DE.format(text=text)
 
     try:
@@ -102,62 +97,28 @@ def extract_entities_with_openai(text, config=None):
             openai_kwargs["temperature"] = temperature
         response = client.chat.completions.create(**openai_kwargs)
         
-        # Process the response
-        if not response.choices or not response.choices[0].message.content:
-            logging.error("Empty response from OpenAI API")
-            return []
-            
-        raw_json = response.choices[0].message.content
-        clean_json = clean_json_from_markdown(raw_json)
-        
-        try:
-            result = json.loads(clean_json)
-            if isinstance(result, list):
-                entities = result
-            else:
-                entities = result.get("entities", [])
-                
-            # Convert field names if necessary
-            processed_entities = []
-            for entity in entities:
-                processed_entity = {}
-                
-                # Map entity fields to expected names
-                if "entity" in entity:
-                    processed_entity["name"] = entity["entity"]
-                elif "name" in entity:
-                    processed_entity["name"] = entity["name"]
-                    
-                if "entity_type" in entity:
-                    processed_entity["type"] = entity["entity_type"]
-                elif "type" in entity:
-                    processed_entity["type"] = entity["type"]
-                    
-                if "wikipedia_url" in entity:
-                    processed_entity["wikipedia_url"] = entity["wikipedia_url"]
-                    
-                if "citation" in entity:
-                    processed_entity["citation"] = entity["citation"]
-                elif "description" in entity:
-                    processed_entity["description"] = entity["description"]
-                    
-                # Add to processed entities if it has at least name and type
-                if "name" in processed_entity and "type" in processed_entity:
-                    processed_entities.append(processed_entity)
-                
-            elapsed_time = time.time() - start_time
-            logging.info(f"Extracted {len(processed_entities)} entities in {elapsed_time:.2f} seconds")
-            
-            # Save training data if enabled
-            if config.get("COLLECT_TRAINING_DATA", False):
-                save_training_data(text, processed_entities, config)
-                
-            return processed_entities
-        except json.JSONDecodeError as e:
-            logging.error(f"Error parsing JSON response: {e}")
-            logging.error(f"Raw response: {raw_json}")
-            return []
-            
+        # Parse semicolon-separated entity lines
+        raw_output = response.choices[0].message.content.strip()
+        lines = raw_output.splitlines()
+        processed_entities = []
+        for ln in lines:
+            parts = [p.strip() for p in ln.split(";")]
+            if len(parts) >= 4:
+                name, typ, url, citation = parts[:4]
+                inferred_flag = "explicit" if mode == "extract" else "implicit"
+                processed_entities.append({
+                    "name": name,
+                    "type": typ,
+                    "wikipedia_url": url,
+                    "citation": citation,
+                    "inferred": inferred_flag
+                })
+        elapsed_time = time.time() - start_time
+        logging.info(f"Extracted {len(processed_entities)} entities in {elapsed_time:.2f} seconds")
+        # Save training data if enabled
+        if config.get("COLLECT_TRAINING_DATA", False):
+            save_training_data(text, processed_entities, config)
+        return processed_entities
     except Exception as e:
         logging.error(f"Error calling OpenAI API: {e}")
         return []
@@ -187,21 +148,20 @@ def save_training_data(text, entities, config=None):
         else:
             system_prompt = "Du bist ein hilfreiches KI-System zur Erkennung und Verknüpfung von Entitäten. Deine Aufgabe ist es, die wichtigsten Entitäten aus einem gegebenen Text zu identifizieren und mit ihren Wikipedia-Seiten zu verknüpfen."
         
-        # Create a training example in OpenAI format
+        # Build semicolon-separated assistant content
+        assistant_content = "\n".join(
+            f"{ent['name']}; {ent['type']}; {ent.get('wikipedia_url','')}; {ent.get('citation','')}" for ent in entities
+        )
         example = {
             "messages": [
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"Identify the main entities in the following text and provide their Wikipedia URLs, entity types, and citations: {text}"},
-                {"role": "assistant", "content": json.dumps({"entities": entities}, ensure_ascii=False)}
+                {"role": "user", "content": f"Identify the main entities in the following text as semicolon-separated lines: name; type; wikipedia_url; citation. Text: {text}"},
+                {"role": "assistant", "content": assistant_content}
             ]
         }
         
         # Speichere nur im OpenAI-Format
         training_data_path = config.get("OPENAI_TRAINING_DATA_PATH", "entity_extractor_openai_format.jsonl")  # Path to JSONL file for training data
-        # Ensure each entity has an 'inferred' field
-        for ent in entities:
-            if 'inferred' not in ent:
-                ent['inferred'] = 'explizit'
         with open(training_data_path, "a", encoding="utf-8") as f:
             f.write(json.dumps(example, ensure_ascii=False) + "\n")
             
@@ -224,11 +184,15 @@ def save_relationship_training_data(system_prompt, user_prompt, relationships, c
         config = DEFAULT_CONFIG
     training_data_path = config.get("OPENAI_RELATIONSHIP_TRAINING_DATA_PATH", "entity_relationship_training_data.jsonl")
     try:
+        # Build semicolon-separated assistant content for relationships
+        assistant_content = "\n".join(
+            f"{rel['subject']}; {rel['predicate']}; {rel['object']}" for rel in relationships
+        )
         example = {
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
-                {"role": "assistant", "content": json.dumps({"relationships": relationships}, ensure_ascii=False)}
+                {"role": "assistant", "content": assistant_content}
             ]
         }
         with open(training_data_path, "a", encoding="utf-8") as f:

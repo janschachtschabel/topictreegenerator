@@ -91,6 +91,9 @@ def infer_entity_relationships(text, entities, user_config=None):
     model = config.get("MODEL", "gpt-4.1-mini")
     language = config.get("LANGUAGE", "de")
     
+    # Max relations per prompt
+    max_relations = config.get("MAX_RELATIONS", 15)
+    
     # Entitätsnamen und Typen extrahieren
     entity_info = []
     logging.info(f"Verarbeite {len(entities)} Entitäten für Beziehungsextraktion")
@@ -145,10 +148,10 @@ def infer_entity_relationships(text, entities, user_config=None):
         logging.info(f"Starte Knowledge Graph Completion-Inferenz: {len(existing_rels)} bestehende Beziehungen")
         if language == "en":
             system_prompt = get_kgc_system_prompt_en()
-            user_msg = get_kgc_user_prompt_en(text, entity_info, existing_rels)
+            user_msg = get_kgc_user_prompt_en(text, entity_info, existing_rels, max_relations)
         else:
             system_prompt = get_kgc_system_prompt_de()
-            user_msg = get_kgc_user_prompt_de(text, entity_info, existing_rels)
+            user_msg = get_kgc_user_prompt_de(text, entity_info, existing_rels, max_relations)
         response = client.chat.completions.create(
             model=model,
             messages=[
@@ -173,7 +176,9 @@ def infer_entity_relationships(text, entities, user_config=None):
                 rel.update({
                     "inferred": "implicit",
                     "subject_type": entity_type_map.get(subj, ""),
-                    "object_type": entity_type_map.get(obj, "")
+                    "object_type": entity_type_map.get(obj, ""),
+                    "subject_inferred": entity_inferred_map.get(subj, "explicit"),
+                    "object_inferred": entity_inferred_map.get(obj, "explicit")
                 })
                 valid_new.append(rel)
         return valid_new
@@ -181,8 +186,8 @@ def infer_entity_relationships(text, entities, user_config=None):
     # Prompt-Logik für explizite und ggf. (implizite) Beziehungen
     # Modus des ersten Prompts: extract vs generate
     mode = config.get("MODE", "extract")
-    # Implizite Beziehungen aktivieren in 'generate'/'compendium'-Modus oder wenn explizit gesetzt
-    enable_inference = config.get("ENABLE_RELATIONS_INFERENCE", False) and mode in ("generate", "compendium")
+    # Implizite Beziehungen aktivieren, wenn ENABLE_RELATIONS_INFERENCE=True
+    enable_inference = config.get("ENABLE_RELATIONS_INFERENCE", False)
     
     # Primärer Prompt: extract vs generate/compendium
     # Unified extract-first prompt
@@ -190,21 +195,22 @@ def infer_entity_relationships(text, entities, user_config=None):
         # All relationships mode
         if language == "en":
             system_prompt_explicit = get_explicit_system_prompt_all_en()
-            user_msg_explicit = get_explicit_user_prompt_all_en(text, entity_info)
+            user_msg_explicit = get_explicit_user_prompt_all_en(text, entity_info, max_relations)
         else:
             system_prompt_explicit = get_explicit_system_prompt_all_de()
-            user_msg_explicit = get_explicit_user_prompt_all_de(text, entity_info)
+            user_msg_explicit = get_explicit_user_prompt_all_de(text, entity_info, max_relations)
     else:
         # Explicit-only mode
         if language == "en":
             system_prompt_explicit = get_explicit_system_prompt_extract_en()
-            user_msg_explicit = get_explicit_user_prompt_extract_en(text, entity_info)
+            user_msg_explicit = get_explicit_user_prompt_extract_en(text, entity_info, max_relations)
         else:
             system_prompt_explicit = get_explicit_system_prompt_extract_de()
-            user_msg_explicit = get_explicit_user_prompt_extract_de(text, entity_info)
+            user_msg_explicit = get_explicit_user_prompt_extract_de(text, entity_info, max_relations)
 
     # Log the model being used
-    logging.info(f"Rufe OpenAI API für explizite Beziehungen auf (Modell {model})...")
+    rel_type = "implizite" if mode in ("generate", "compendium") else "explizite"
+    logging.info(f"Rufe OpenAI API für {rel_type} Beziehungen auf (Modell {model})...")
     logging.debug(f"[REL_EXP] SYSTEM PROMPT:\n{system_prompt_explicit}")
     logging.debug(f"[REL_EXP] USER MSG:\n{user_msg_explicit}")
 
@@ -224,11 +230,20 @@ def infer_entity_relationships(text, entities, user_config=None):
         logging.info(f"Erster Prompt abgeschlossen in {elapsed_time:.2f} Sekunden")
 
         relationships_explicit = extract_json_relationships(raw_json_explicit)
+        # Normalize entity names case-insensitively to match extracted entities
+        lower_to_name = {name.lower(): name for name in entity_type_map.keys()}
+        for rel in relationships_explicit:
+            subj_lower = rel.get("subject", "").lower()
+            if subj_lower in lower_to_name:
+                rel["subject"] = lower_to_name[subj_lower]
+            obj_lower = rel.get("object", "").lower()
+            if obj_lower in lower_to_name:
+                rel["object"] = lower_to_name[obj_lower]
         valid_relationships_explicit = []
         for rel in relationships_explicit:
             if all(k in rel for k in ["subject", "predicate", "object"]):
-                # Im generate- oder compendium-Modus implizite/explizite Markierung beibehalten
-                inferred_status = rel.get("inferred", "explicit") if mode in ("generate", "compendium") else "explicit"
+                # In generate/compendium mode, mark all as implicit; else explicit
+                inferred_status = "implicit" if mode in ("generate", "compendium") else "explicit"
                 rel["inferred"] = inferred_status
                 rel["subject_type"] = entity_type_map.get(rel["subject"], "")
                 rel["object_type"] = entity_type_map.get(rel["object"], "")
@@ -236,20 +251,23 @@ def infer_entity_relationships(text, entities, user_config=None):
                 rel["object_inferred"] = entity_inferred_map.get(rel["object"], "explicit")
                 if rel["subject_type"] and rel["object_type"]:
                     valid_relationships_explicit.append(rel)
-        logging.info(f"{len(valid_relationships_explicit)} gültige explizite Beziehungen gefunden")
+        logging.info(f"{len(valid_relationships_explicit)} gültige {rel_type} Beziehungen gefunden")
 
         # Wenn keine Inferenz gewünscht: Nur explizite Beziehungen zurückgeben
         if not enable_inference:
+            # Save relationship training data for explicit relationships if enabled
+            if config.get("COLLECT_TRAINING_DATA", False):
+                save_relationship_training_data(system_prompt_explicit, user_msg_explicit, valid_relationships_explicit, config)
             return valid_relationships_explicit
 
         # Implizite Beziehungen (falls enabled)
         if enable_inference:
             if language == "en":
                 system_prompt_implicit = get_implicit_system_prompt_en()
-                user_msg_implicit = get_implicit_user_prompt_en(text, entity_info, valid_relationships_explicit)
+                user_msg_implicit = get_implicit_user_prompt_en(text, entity_info, valid_relationships_explicit, max_relations)
             else:
                 system_prompt_implicit = get_implicit_system_prompt_de()
-                user_msg_implicit = get_implicit_user_prompt_de(text, entity_info, valid_relationships_explicit)
+                user_msg_implicit = get_implicit_user_prompt_de(text, entity_info, valid_relationships_explicit, max_relations)
         else:
             system_prompt_implicit = None
             user_msg_implicit = None
@@ -288,7 +306,7 @@ def infer_entity_relationships(text, entities, user_config=None):
             if rel_key(rel) not in all_relationships:
                 all_relationships[rel_key(rel)] = rel
         result = list(all_relationships.values())
-        logging.info(f"Gesamt: {len(result)} Beziehungen (explizit + implizit)")
+        logging.info(f"Gesamt: {len(result)} Beziehungen")
 
         # === LLM-basierte Deduplizierung ähnlicher Beziehungen pro (Subjekt, Objekt) ===
         from collections import defaultdict
@@ -341,7 +359,7 @@ def infer_entity_relationships(text, entities, user_config=None):
                 logging.error(f"Fehler bei LLM-Deduplizierung für Paar ({subj}, {obj}): {e}")
                 deduped_result.extend(rels)
         post_dedup_count = len(deduped_result)
-        logging.info(f"Beziehungen: Vor Deduplizierung: {pre_dedup_count}, Nach Deduplizierung: {post_dedup_count}")
+        logging.info(f"Interne LLM-Deduplizierung (Relationship-Inference): Vorher: {pre_dedup_count}, Nachher: {post_dedup_count}")
 
         # Trainingsdaten für Beziehungsextraktion speichern
         if config.get("COLLECT_TRAINING_DATA", False):
@@ -357,16 +375,24 @@ def infer_entity_relationships(text, entities, user_config=None):
         return []
 
 def extract_json_relationships(raw_json):
-    try:
-        json_start = raw_json.find('[')
-        json_end = raw_json.rfind(']') + 1
-        if json_start >= 0 and json_end > json_start:
-            json_content = raw_json[json_start:json_end]
-            relationships = json.loads(json_content)
+    # Try to parse as JSON array
+    json_start = raw_json.find('[')
+    json_end = raw_json.rfind(']') + 1
+    if json_start >= 0 and json_end > json_start:
+        try:
+            return json.loads(raw_json[json_start:json_end])
+        except Exception:
+            pass
+    # Fallback: parse semicolon-separated lines 'subject; predicate; object'
+    relationships = []
+    for line in raw_json.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        parts = [p.strip() for p in line.split(';')]
+        if len(parts) >= 3:
+            subj, pred, obj = parts[0], parts[1], ';'.join(parts[2:])
+            relationships.append({"subject": subj, "predicate": pred, "object": obj})
         else:
-            relationships = json.loads(raw_json)
-        return relationships
-    except Exception as e:
-        logging.error(f"Fehler beim Parsen der JSON-Antwort: {e}")
-        logging.error(f"Rohantwort: {raw_json}")
-        return []
+            logging.warning(f"Cannot parse relationship line: {line}")
+    return relationships

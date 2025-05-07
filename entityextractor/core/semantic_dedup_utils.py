@@ -7,13 +7,14 @@ def filter_semantically_similar_relationships(relationships, similarity_threshol
     Nur das Triple mit dem "prägnantesten" Prädikat (kürzester String) bleibt erhalten.
     """
     from collections import defaultdict
+    import difflib
     grouped = defaultdict(list)
     for rel in relationships:
         # Gruppieren nach Entity-Paar unabhängig von Richtung
         key = frozenset([rel["subject"], rel["object"]])
         grouped[key].append(rel)
     result = []
-    for (subj, obj), rels in grouped.items():
+    for key_set, rels in grouped.items():
         kept = []
         used = set()
         for i, r1 in enumerate(rels):

@@ -35,8 +35,12 @@ def deduplicate_relationships_llm(relationships, entities, user_config=None):
         grouped[key].append(rel)
     deduped_result = []
     for pair, rels in grouped.items():
-        # Für Prompt benötigen wir Subject und Object im Original (Richtung irrelevant)
-        subj, obj = tuple(pair)
+        # Handle self-relations: frozenset may have a single element
+        items = list(pair)
+        if len(items) == 1:
+            subj = obj = items[0]
+        else:
+            subj, obj = items
         if len(rels) == 1:
             deduped_result.append(rels[0])
             continue

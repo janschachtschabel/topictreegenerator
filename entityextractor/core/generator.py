@@ -25,6 +25,7 @@ from entityextractor.prompts.generation_prompts import (
     get_system_prompt_generate_de,
     get_user_prompt_generate_de,
 )
+from entityextractor.utils.prompt_utils import apply_type_restrictions
 
 def save_training_data(topic, entities, config=None):
     """
@@ -60,11 +61,16 @@ def save_training_data(topic, entities, config=None):
             else:
                 system_prompt = get_system_prompt_generate_de(max_entities, topic)
                 user_prompt = get_user_prompt_generate_de(max_entities, topic)
+        
+        # Build semicolon-separated assistant content for training
+        assistant_content = "\n".join(
+            f"{ent['name']}; {ent['type']}; {ent.get('wikipedia_url','')}; {ent.get('citation','')}" for ent in entities
+        )
         example = {
             "messages": [
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-                {"role": "assistant", "content": json.dumps({"entities": entities}, ensure_ascii=False)}
+                {"role": "user", "content": f"Generate entities for topic '{topic}' as semicolon-separated lines: name; type; wikipedia_url; citation."},
+                {"role": "assistant", "content": assistant_content}
             ]
         }
         
@@ -141,6 +147,9 @@ def generate_entities(topic, user_config=None):
             system_prompt = get_system_prompt_generate_en(max_entities, topic)
             user_msg = get_user_prompt_generate_en(max_entities, topic)
     
+    # Apply unified entity type restriction
+    system_prompt = apply_type_restrictions(system_prompt, allowed_entity_types, language)
+    
     try:
         # Log the model being used
         logging.info(f"Generating entities with OpenAI model {model}...")
@@ -167,77 +176,34 @@ def generate_entities(topic, user_config=None):
         if not response.choices or not response.choices[0].message.content:
             logging.error("Empty response from OpenAI API")
             return []
-            
-        raw_json = response.choices[0].message.content
-        clean_json = clean_json_from_markdown(raw_json)
         
-        try:
-            result = json.loads(clean_json)
-            # Handle both JSON array and object with 'entities' key
-            if isinstance(result, dict) and isinstance(result.get("entities"), list):
-                entities = result.get("entities")
-            elif isinstance(result, list):
-                entities = result
-            else:
-                logging.error("Unexpected JSON format; expected list or object with 'entities'")
-                entities = []
-            
-            # Convert field names if necessary
-            mode = config.get("MODE", "extract")
-            processed_entities = []
-            for entity in entities:
-                processed_entity = {}
-                
-                # Map entity fields to expected names
-                if "entity" in entity:
-                    processed_entity["name"] = entity["entity"]
-                elif "name" in entity:
-                    processed_entity["name"] = entity["name"]
-                    
-                if "entity_type" in entity:
-                    processed_entity["type"] = entity["entity_type"]
-                elif "type" in entity:
-                    processed_entity["type"] = entity["type"]
-                    
-                if "wikipedia_url" in entity:
-                    processed_entity["wikipedia_url"] = entity["wikipedia_url"]
-                    
-                # Set citation based on inferred flag
-                if entity.get("inferred", "implicit") == "explicit":
-                    processed_entity["citation"] = topic
-                else:
-                    processed_entity["citation"] = "generated"
-                
-                # Preserve 'inferred' flag from JSON (default to implicit in generate and compendium modes)
-                inferred = entity.get("inferred")
-                if not inferred:
-                    inferred = "implicit" if mode in ("generate", "compendium") else "explicit"
-                processed_entity["inferred"] = inferred
-                
-                # Add to processed entities if it has at least name and type
-                if "name" in processed_entity and "type" in processed_entity:
-                    processed_entities.append(processed_entity)
-            
-            elapsed_time = time.time() - start_time
-            logging.info(f"Generated {len(processed_entities)} entities in {elapsed_time:.2f} seconds")
-            
-            # Save training data if enabled
-            if config.get("COLLECT_TRAINING_DATA", False):
-                save_training_data(topic, processed_entities, config)
-                
-            # Ergänze implizite Entitäten via ENABLE_ENTITY_INFERENCE
-            if config.get("ENABLE_ENTITY_INFERENCE", False):
-                processed_entities = infer_entities(topic, processed_entities, config)
-            
-            # Add 'sources' field for detail enrichment
-            for pe in processed_entities:
-                pe["sources"] = {}
-                
-            return processed_entities
-        except json.JSONDecodeError as e:
-            logging.error(f"Error parsing JSON response: {e}")
-            logging.error(f"Raw response: {raw_json}")
-            return []
+        # Parse semicolon-separated entity lines
+        raw_output = response.choices[0].message.content.strip()
+        lines = raw_output.splitlines()
+        processed_entities = []
+        for ln in lines:
+            parts = [p.strip() for p in ln.split(';')]
+            if len(parts) >= 4:
+                name, typ, url, citation = parts[:4]
+                processed_entities.append({
+                    'name': name,
+                    'type': typ,
+                    'wikipedia_url': url,
+                    'citation': citation,
+                    'inferred': 'implicit'
+                })
+        elapsed_time = time.time() - generation_start_time
+        logging.info(f"Generated {len(processed_entities)} entities in {elapsed_time:.2f} seconds")
+        # Save training data if enabled
+        if config.get('COLLECT_TRAINING_DATA', False):
+            save_training_data(topic, processed_entities, config)
+        # Optional entity inference
+        if config.get('ENABLE_ENTITY_INFERENCE', False):
+            processed_entities = infer_entities(topic, processed_entities, config)
+        # Add 'sources' field
+        for pe in processed_entities:
+            pe['sources'] = {}
+        return processed_entities
     except Exception as e:
         logging.error(f"Error generating entities: {e}")
         return []

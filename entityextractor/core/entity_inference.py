@@ -15,6 +15,7 @@ from entityextractor.prompts.entity_inference_prompts import (
     get_system_prompt_entity_inference_de,
     get_user_prompt_entity_inference_de,
 )
+from entityextractor.utils.prompt_utils import apply_type_restrictions
 
 # Default-Konfiguration
 DEFAULT_CONFIG = {
@@ -48,8 +49,12 @@ def infer_entities(text, entities, user_config=None):
         # Preserve original 'inferred' flag (default to explicit if missing)
         inferred_flag = e.get("inferred", "explicit")
         explicit.append({"name": name, "type": typ, "wikipedia_url": url, "inferred": inferred_flag})
-    # Logging: Anzahl expliziter Entitäten
-    logging.info(f"Vorhandene explizite Entitäten: {len(explicit)}")
+    # Logging: Anzahl initialer Entitäten (unterschiedliche Bezeichnungen je Modus)
+    mode = config.get("MODE", "extract")
+    if mode in ("generate", "compendium"):
+        logging.info(f"Vorhandene generierte Entitäten: {len(explicit)}")
+    else:
+        logging.info(f"Vorhandene explizite Entitäten: {len(explicit)}")
     # Wenn nicht aktiviert, zurückgeben
     if not config.get("ENABLE_ENTITY_INFERENCE", False):
         logging.info("Entity Inference deaktiviert.")
@@ -65,6 +70,8 @@ def infer_entities(text, entities, user_config=None):
     else:
         system_prompt = get_system_prompt_entity_inference_en(max_entities)
         user_msg = get_user_prompt_entity_inference_en(text, explicit, max_entities)
+    # Apply unified entity type restriction
+    system_prompt = apply_type_restrictions(system_prompt, config.get("ALLOWED_ENTITY_TYPES", "auto"), language)
     # API-Aufruf
     logging.info(f"Rufe OpenAI API für implizite Entitäten auf (Modell {config.get('MODEL', DEFAULT_CONFIG['MODEL'])})...")
     client = OpenAI(api_key=config.get("OPENAI_API_KEY"))
@@ -74,32 +81,21 @@ def infer_entities(text, entities, user_config=None):
         temperature=config.get("TEMPERATURE", DEFAULT_CONFIG["TEMPERATURE"]),
         max_tokens=1500,
     )
-    raw = response.choices[0].message.content
-    # JSON parsen
-    try:
-        new_list = json.loads(raw)
-    except json.JSONDecodeError:
-        start = raw.find("[")
-        end = raw.rfind("]") + 1
-        new_list = json.loads(raw[start:end])
-    # Vereinheitlichung neuer Entities
+    raw = response.choices[0].message.content.strip()
+    # Parse semicolon-separated entity lines
+    lines = [ln.strip() for ln in raw.splitlines() if ln.strip()]
     implicit = []
-    for e in new_list:
-        name = e.get("entity") or e.get("name", "")
-        typ = e.get("entity_type") or e.get("type", "")
-        url = e.get("wikipedia_url", "")
-        inferred = e.get("inferred", "implicit")
-        # Set citation for implicit entities
-        citation = e.get("citation", "generated")
-        if name and typ:
+    for ln in lines:
+        parts = [p.strip() for p in ln.split(';')]
+        if len(parts) >= 4:
+            name, typ, url, citation = parts[:4]
             implicit.append({
                 "name": name,
                 "type": typ,
                 "wikipedia_url": url,
-                "inferred": inferred,
+                "inferred": "implicit",
                 "citation": citation
             })
-    # Logging: Anzahl impliziter Entitäten
     logging.info(f"Extrahierte implizite Entitäten: {len(implicit)}")
     # Merge (explicit überschreibt implicit bei Duplikaten)
     merged = { (e["name"], e["type"]): e for e in implicit }

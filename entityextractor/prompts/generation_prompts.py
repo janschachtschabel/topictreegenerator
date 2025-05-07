@@ -5,25 +5,22 @@ Includes system and user prompts for both 'generate' and 'compendium' modes, Eng
 
 def get_system_prompt_compendium_en(max_entities, topic):
     return f"""
-You are a comprehensive knowledge generator for creating educational compendia. Think carefully and answer thoroughly.
+You are a comprehensive knowledge generator for creating educational compendia. Think carefully and answer thoroughly and completely.
 Generate exactly {max_entities} implicit, logical entities for the topic: {topic}.
 
-Ensure that you only generate entities that are implicitly derived from the context and exclude any explicit entities.
+Output format:
+Each entity as a semicolon-separated line: name; type; wikipedia_url; citation.
+One entity per line. No JSON or additional formatting.
 
-Return a JSON array of {max_entities} objects. Each object contains:
-- entity: Exact English Wikipedia title
-- entity_type: Type of the entity
-- wikipedia_url: URL of the English Wikipedia article
-- citation: "generated"
-- inferred: "implicit"
-
-Rules:
-- Generate only implicit entities.
-- Generate exactly {max_entities} entities.
-- Use English Wikipedia titles and URLs.
-- Return only valid JSON without explanation.
-- Return only valid JSON without explanation
-- Wikipedia URLs must not include percent-encoded characters; special characters should be unencoded (e.g., https://en.wikipedia.org/wiki/Schrödinger_equation)
+Guidelines:
+- Generate only implicit entities; set 'inferred' to "implicit" for each.
+- Set 'citation' to "generated" for each.
+- Use only English Wikipedia (en.wikipedia.org) for titles and URLs; skip entities without articles.
+- Citations must be exact text spans from the input, max 5 words, no ellipses or truncation.
+- Wikipedia URLs must not include percent-encoded characters; special characters unencoded.
+- Entity types must match the allowed types.
+- Example types: Assessment, Activity, Competence, Credential, Curriculum, Date, Event, Feedback, Field, Funding, Goal, Group, Language, Location, Method, Objective, Organization, Partnership, Period, Person, Phenomenon, Policy, Prerequisite, Process, Project, Resource, Role, Subject, Support, System, Task, Term, Theory, Time, Tool, Value, Work
+- Do not include any explanations or additional text.
 """
 
 def get_user_prompt_compendium_en(max_entities, topic):
@@ -34,35 +31,68 @@ def get_system_prompt_compendium_de(max_entities, topic):
 Du bist ein umfassender Wissensgenerator für die Erstellung von Bildungskompendien. Denke sorgfältig nach und antworte vollständig.
 Generiere genau {max_entities} implizite, logische Entitäten zum Thema: {topic}.
 
-Achte darauf, ausschließlich implizit aus dem Kontext abgeleitete Entitäten zu generieren und keine expliziten Entitäten aufzunehmen.
+Ausgabeformat:
+Jede Entität als semikolon-getrennte Zeile: name; type; wikipedia_url; citation.
+Eine Entität pro Zeile. Keine JSON oder zusätzliche Formatierung.
 
-Gib ein JSON-Array mit {max_entities} Objekten zurück. Jedes Objekt enthält:
-- entity: Exakter Titel im deutschen Wikipedia-Artikel
-- entity_type: Typ der Entität
-- wikipedia_url: URL des deutschen Wikipedia-Artikels
-- citation: "generated"
-- inferred: "implicit"
-
-Regeln:
-- Generiere ausschließlich implizite Entitäten.
-- Generiere genau {max_entities} Entitäten.
-- Verwende deutsche Wikipedia-Titel und URLs.
-- Gib nur gültiges JSON ohne Erklärung zurück.
-- Gib nur gültiges JSON ohne Erklärung zurück
-- Wikipedia-URLs dürfen keine Prozent-Codierung enthalten; Sonderzeichen und Umlaute müssen unkodiert sein (z. B. https://de.wikipedia.org/wiki/Schrödinger-Gleichung)
+Richtlinien:
+- Generiere ausschließlich implizite Entitäten und setze 'inferred' auf "implicit" für jede Entität.
+- Setze 'citation' auf "generated" für jede Entität.
+- Verwende nur die deutsche Wikipedia (de.wikipedia.org) für Titel und URLs; überspringe Entitäten ohne Artikel.
+- Zitate müssen exakte Textausschnitte aus dem Eingabetext sein, maximal 5 Wörter, keine Auslassungen.
+- Wikipedia-URLs dürfen keine Prozent-Codierung enthalten; Sonderzeichen unkodiert.
+- Entity-Typen müssen den erlaubten Typen entsprechen.
+- Beispiel-Typen: Bewertung, Aktivität, Kompetenz, Nachweis, Curriculum, Datum, Ereignis, Rückmeldung, Fachgebiet, Förderung, Ziel, Gruppe, Sprache, Ort, Methode, Lernziel, Organisation, Partnerschaft, Zeitraum, Person, Phänomen, Richtlinie, Voraussetzung, Prozess, Projekt, Ressource, Rolle, Thema, Unterstützung, System, Aufgabe, Begriff, Theorie, Zeit, Werkzeug, Wert, Werk
+- Keine Erklärungen oder zusätzlichen Texte.
 """
 
 def get_user_prompt_compendium_de(max_entities, topic):
     return get_system_prompt_compendium_de(max_entities, topic)
 
 def get_system_prompt_generate_en(max_entities, topic):
-    return f"Generate {max_entities} implicit, logical entities relevant to the topic: {topic}. Only output implicit entities. Wikipedia URLs must not include percent-encoded characters; special characters should be unencoded (e.g., https://en.wikipedia.org/wiki/Schrödinger_equation)"
+    return f"""
+Generate exactly {max_entities} implicit, logical entities relevant to the topic: {topic}.
+
+Output format:
+Each entity as a semicolon-separated line: name; type; wikipedia_url; citation.
+One entity per line. No JSON or additional formatting.
+
+Guidelines:
+- Set 'citation' to "generated" for each entity.
+- Use only English Wikipedia (en.wikipedia.org) with exact title and URL; skip entities without articles.
+- Citations must be exact text spans, max 5 words, no ellipses or truncation.
+- Wikipedia URLs must not include percent-encoded characters; special characters unencoded.
+- Example types: Assessment, Activity, Competence, Credential, Curriculum, Date, Event, Feedback, Field, Funding, Goal, Group, Language, Location, Method, Objective, Organization, Partnership, Period, Person, Phenomenon, Policy, Prerequisite, Process, Project, Resource, Role, Subject, Support, System, Task, Term, Theory, Time, Tool, Value, Work
+- Do not include any explanations or additional text.
+"""
 
 def get_user_prompt_generate_en(max_entities, topic):
-    return f"Provide a JSON array of {max_entities} objects, each with fields 'entity', 'entity_type', 'wikipedia_url', 'inferred', 'citation'. Set 'inferred' to \"implicit\" and 'citation' to \"generated\" for all entities. Return only JSON."
+    return (
+        f"Provide exactly {max_entities} implicit entities as semicolon-separated lines: name; type; wikipedia_url; citation. "
+        f"Ensure Wikipedia URLs are from en.wikipedia.org with exact title and URL. "
+        "One entity per line. No JSON."
+    )
 
 def get_system_prompt_generate_de(max_entities, topic):
-    return f"Generiere {max_entities} implizite, logische Entitäten zum Thema: {topic}. Ausgabe: nur implizite Entitäten. Wikipedia-URLs dürfen keine Prozent-Codierung enthalten; Sonderzeichen und Umlaute müssen unkodiert sein (z. B. https://de.wikipedia.org/wiki/Schrödinger-Gleichung)"
+    return f"""
+Generiere genau {max_entities} implizite, logische Entitäten zum Thema: {topic}.
+
+Ausgabeformat:
+Jede Entität als semikolon-getrennte Zeile: name; type; wikipedia_url; citation.
+Eine Entität pro Zeile. Keine JSON oder zusätzliche Formatierung.
+
+Richtlinien:
+- Setze 'citation' auf "generated" für jede Entität.
+- Verwende nur die deutsche Wikipedia (de.wikipedia.org) mit exaktem Titel und URL; überspringe Entitäten ohne Artikel.
+- Zitate müssen exakte Textausschnitte sein, maximal 5 Wörter, keine Auslassungen.
+- Wikipedia-URLs dürfen keine Prozent-Codierung enthalten; Sonderzeichen unkodiert.
+- Beispiel-Typen: Bewertung, Aktivität, Kompetenz, Nachweis, Curriculum, Datum, Ereignis, Rückmeldung, Fachgebiet, Förderung, Ziel, Gruppe, Sprache, Ort, Methode, Lernziel, Organisation, Partnerschaft, Zeitraum, Person, Phänomen, Richtlinie, Voraussetzung, Prozess, Projekt, Ressource, Rolle, Thema, Unterstützung, System, Aufgabe, Begriff, Theorie, Zeit, Werkzeug, Wert, Werk
+- Keine Erklärungen oder zusätzlichen Texte.
+"""
 
 def get_user_prompt_generate_de(max_entities, topic):
-    return f"Gib ein JSON-Array von {max_entities} Objekten mit den Feldern 'entity', 'entity_type', 'wikipedia_url', 'inferred', 'citation' zurück. Setze 'inferred' auf \"implicit\" und 'citation' auf \"generated\" für alle Entitäten. Nur JSON zurückgeben."
+    return (
+        f"Gib genau {max_entities} implizite Entitäten als semikolon-getrennte Zeilen zurück: name; type; wikipedia_url; citation. "
+        f"Stelle sicher, dass die Wikipedia-URLs von de.wikipedia.org stammen und exakten Titel und URL verwenden. "
+        "Eine Entität pro Zeile. Keine JSON."
+    )

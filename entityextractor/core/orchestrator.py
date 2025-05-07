@@ -91,6 +91,12 @@ def process_entities(input_text: str, user_config: dict = None):
                 ws = leg["sources"].setdefault("wikipedia", {})
                 if e.get("wikipedia_title"):
                     ws["label"] = e.get("wikipedia_title")
+                else:
+                    # Fallback: derive label from URL
+                    from urllib.parse import unquote
+                    raw = e.get("wikipedia_url").split("/wiki/")[-1].split("#")[0]
+                    title = unquote(raw).replace("_", " ")
+                    ws["label"] = title
                 ws["url"] = e.get("wikipedia_url")
                 if e.get("wikipedia_extract"):
                     ws["extract"] = e.get("wikipedia_extract")
@@ -191,8 +197,12 @@ def process_entities(input_text: str, user_config: dict = None):
             result["relationships"] = final_rels
         # visualization
         if config.get("ENABLE_GRAPH_VISUALIZATION", False):
-            vis = visualize_graph(result, config)
-            result["knowledgegraph_visualisation"] = [{"static": vis.get("png"), "interactive": vis.get("html")}]
+            if not result.get("relationships"):
+                logging.error("[orchestrator] Graph visualization aborted: no relationships available.")
+                result["knowledgegraph_visualisation"] = []
+            else:
+                vis = visualize_graph(result, config)
+                result["knowledgegraph_visualisation"] = [{"static": vis.get("png"), "interactive": vis.get("html")}]
         logging.info("[orchestrator] Chunking flow done in %.2f sec", time.time()-start)
         return result
 
@@ -233,6 +243,12 @@ def process_entities(input_text: str, user_config: dict = None):
             ws = leg["sources"].setdefault("wikipedia", {})
             if e.get("wikipedia_title"):
                 ws["label"] = e.get("wikipedia_title")
+            else:
+                # Fallback: derive label from URL
+                from urllib.parse import unquote
+                raw = e.get("wikipedia_url").split("/wiki/")[-1].split("#")[0]
+                title = unquote(raw).replace("_", " ")
+                ws["label"] = title
             ws["url"] = e.get("wikipedia_url")
             if e.get("wikipedia_extract"):
                 ws["extract"] = e.get("wikipedia_extract")
@@ -334,7 +350,11 @@ def process_entities(input_text: str, user_config: dict = None):
         result["relationships"] = final_rels
     # visualization if enabled
     if config.get("ENABLE_GRAPH_VISUALIZATION", False):
-        vis = visualize_graph(result, config)
-        result["knowledgegraph_visualisation"] = [{"static": vis.get("png"), "interactive": vis.get("html")}]
+        if not result.get("relationships"):
+            logging.error("[orchestrator] Graph visualization aborted: no relationships available.")
+            result["knowledgegraph_visualisation"] = []
+        else:
+            vis = visualize_graph(result, config)
+            result["knowledgegraph_visualisation"] = [{"static": vis.get("png"), "interactive": vis.get("html")}]
     logging.info("[orchestrator] Single-pass done in %.2f sec", time.time()-start)
     return result

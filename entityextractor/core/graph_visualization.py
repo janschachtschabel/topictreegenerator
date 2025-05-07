@@ -27,6 +27,11 @@ def visualize_graph(result, config):
     entities = result.get("entities", [])
     relationships = result.get("relationships", [])
 
+    # If no relationships, abort visualization to avoid errors
+    if not relationships:
+        logging.error("Graph visualization aborted: no relationships available.")
+        return
+
     # Build MultiDiGraph
     G = nx.MultiDiGraph()
     for rel in relationships:
