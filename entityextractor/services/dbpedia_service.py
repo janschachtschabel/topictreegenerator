@@ -15,9 +15,17 @@ import hashlib
 from urllib.error import HTTPError, URLError
 import xml.etree.ElementTree as ET
 
-from entityextractor.config.settings import DEFAULT_CONFIG
+from entityextractor.config.settings import DEFAULT_CONFIG, get_config
 from entityextractor.services.wikipedia_service import get_wikipedia_title_in_language
 from entityextractor.utils.cache_utils import get_cache_path, load_cache, save_cache
+from entityextractor.utils.rate_limiter import RateLimiter
+
+_config = get_config()
+_rate_limiter = RateLimiter(_config["RATE_LIMIT_MAX_CALLS"], _config["RATE_LIMIT_PERIOD"], _config["RATE_LIMIT_BACKOFF_BASE"], _config["RATE_LIMIT_BACKOFF_MAX"])
+
+@_rate_limiter
+def _limited_get(url, **kwargs):
+    return requests.get(url, **kwargs)
 
 def get_dbpedia_info_from_wikipedia_url(wikipedia_url, config=None):
     """
@@ -117,7 +125,7 @@ def get_dbpedia_info_from_wikipedia_url(wikipedia_url, config=None):
                 try:
                     params_j = {"QueryString": lookup_term, "MaxHits": config.get("DBPEDIA_LOOKUP_MAX_HITS", 5), "format": "json"}
                     headers_j = {"Accept": "application/json"}
-                    resp_j = requests.get(lookup_url, params=params_j, headers=headers_j, timeout=config.get("TIMEOUT_THIRD_PARTY", 15))
+                    resp_j = _limited_get(lookup_url, params=params_j, headers=headers_j, timeout=config.get("TIMEOUT_THIRD_PARTY", 15))
                     resp_j.raise_for_status()
                     data_j = resp_j.json()
                     json_items = data_j.get("results") or data_j.get("docs") or []
@@ -128,7 +136,7 @@ def get_dbpedia_info_from_wikipedia_url(wikipedia_url, config=None):
                 try:
                     params_x = {"QueryString": lookup_term, "MaxHits": config.get("DBPEDIA_LOOKUP_MAX_HITS", 5), "format": "xml"}
                     headers_x = {"Accept": "application/xml"}
-                    resp_x = requests.get(lookup_url, params=params_x, headers=headers_x, timeout=config.get("TIMEOUT_THIRD_PARTY", 15))
+                    resp_x = _limited_get(lookup_url, params=params_x, headers=headers_x, timeout=config.get("TIMEOUT_THIRD_PARTY", 15))
                     resp_x.raise_for_status()
                     root = ET.fromstring(resp_x.text)
                     for res in root.findall(".//Result"):
@@ -208,6 +216,7 @@ def get_dbpedia_details(wikipedia_url, config=None):
         config = DEFAULT_CONFIG
     return get_dbpedia_info_from_wikipedia_url(wikipedia_url, config)
 
+@_rate_limiter
 def query_dbpedia_resource(resource_uri, lang="en", config=None):
     """
     Query DBpedia for information about a resource using SPARQL.
@@ -325,6 +334,8 @@ def query_dbpedia_resource(resource_uri, lang="en", config=None):
             sparql.setQuery(query)
             sparql.setReturnFormat(JSON)
             sparql.setTimeout(dbpedia_timeout)
+            # Set User-Agent header for SPARQL requests
+            sparql.setAgent(config.get("USER_AGENT"))
 
             # Execute the query with HTTPS -> HTTP fallback on TLS errors and HTTP 5xx
             logging.info(f"Querying DBpedia endpoint {endpoint} for resource: {resource_uri}")

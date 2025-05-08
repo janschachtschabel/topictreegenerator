@@ -25,11 +25,11 @@ DEFAULT_CONFIG = {
     "DBPEDIA_USE_DE": False,    # DEUTSCHE DBPEDIA NUTZEN (STANDARD: FALSE = ENGLISCHE DBPEDIA)
 
     # === DBpedia Lookup API Fallback ===
-    "DBPEDIA_LOOKUP_API": False,      # Fallback via DBpedia Lookup API aktivieren
+    "DBPEDIA_LOOKUP_API": True,      # Fallback via DBpedia Lookup API aktivieren
     "DBPEDIA_SKIP_SPARQL": False,      # Skip SPARQL queries and use Lookup API only
     "DBPEDIA_LOOKUP_MAX_HITS": 5,     # Max. Trefferzahl für Lookup API
     "DBPEDIA_LOOKUP_CLASS": None,     # Optionale DBpedia-Ontology-Klasse für Lookup API
-    "DBPEDIA_LOOKUP_FORMAT": "json",   # Response format: "json", "xml", or "both"
+    "DBPEDIA_LOOKUP_FORMAT": "xml",   # Response format: "json", "xml", or "both"
 
     # === LANGUAGE SETTINGS ===
     "LANGUAGE": "en",           # SPRACHE DER VERARBEITUNG (DE ODER EN)
@@ -46,9 +46,9 @@ DEFAULT_CONFIG = {
     "ENABLE_ENTITY_INFERENCE": False, # IMPLIZITE ENTITÄTSEKENNUNG AKTIVIEREN
 
     # === RELATIONSHIP EXTRACTION AND INFERENCE ===
-    "RELATION_EXTRACTION": False,         # RELATIONSEXTRACTION AKTIVIEREN
+    "RELATION_EXTRACTION": True,         # RELATIONSEXTRACTION AKTIVIEREN
     "ENABLE_RELATIONS_INFERENCE": False,  # IMPLIZITE RELATIONEN AKTIVIEREN
-    "MAX_RELATIONS": 15,                  # MAXIMALE ANZAHL BEZIEHUNGEN PRO PROMPT
+    "MAX_RELATIONS": 20,                  # MAXIMALE ANZAHL BEZIEHUNGEN PRO PROMPT
 
     # === KNOWLEDGE GRAPH COMPLETION (KGC) ===
     "ENABLE_KGC": False,   # KNOWLEDGE GRAPH COMPLETION AKTIVIEREN
@@ -61,6 +61,14 @@ DEFAULT_CONFIG = {
 
     # === API AND TIMEOUT SETTINGS ===
     "TIMEOUT_THIRD_PARTY": 15,  # TIMEOUT FÜR EXTERNE DIENSTE (WIKIPEDIA, WIKIDATA, DBPEDIA)
+
+    # === RATE LIMITER SETTINGS ===
+    "RATE_LIMIT_MAX_CALLS": 3,       # Max Aufrufe pro Zeitraum
+    "RATE_LIMIT_PERIOD": 1,          # Zeitraum in Sekunden
+    "RATE_LIMIT_BACKOFF_BASE": 1,    # Basis für exponentielles Backoff
+    "RATE_LIMIT_BACKOFF_MAX": 60,    # Max Wartezeit bei Backoff
+    "USER_AGENT": "EntityExtractor/1.0", # HTTP User-Agent Header
+    "WIKIPEDIA_MAXLAG": 5,           # maxlag-Parameter für Wikipedia API
 
     # === LOGGING AND DEBUG SETTINGS ===
     "SHOW_STATUS": True,        # STATUSMELDUNGEN ANZEIGEN

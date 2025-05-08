@@ -16,10 +16,17 @@ import json
 import hashlib
 from entityextractor.services.wikidata_service import generate_entity_synonyms
 from entityextractor.utils.cache_utils import get_cache_path, load_cache, save_cache
-
-from entityextractor.config.settings import DEFAULT_CONFIG
+from entityextractor.utils.rate_limiter import RateLimiter
+from entityextractor.config.settings import get_config, DEFAULT_CONFIG
 from entityextractor.utils.text_utils import is_valid_wikipedia_url
 from entityextractor.utils.wiki_url_utils import sanitize_wikipedia_url
+
+_config = get_config()
+_rate_limiter = RateLimiter(_config["RATE_LIMIT_MAX_CALLS"], _config["RATE_LIMIT_PERIOD"], _config["RATE_LIMIT_BACKOFF_BASE"], _config["RATE_LIMIT_BACKOFF_MAX"])
+
+@_rate_limiter
+def _limited_get(url, **kwargs):
+    return requests.get(url, **kwargs)
 
 def get_wikipedia_title_in_language(title, from_lang="de", to_lang="en", config=None):
     """
@@ -46,12 +53,15 @@ def get_wikipedia_title_in_language(title, from_lang="de", to_lang="en", config=
         "prop": "langlinks",
         "titles": title,
         "lllang": to_lang,
-        "format": "json"
+        "format": "json",
+        "maxlag": config.get("WIKIPEDIA_MAXLAG")
     }
+    
+    headers = {"User-Agent": config.get("USER_AGENT")}
     
     try:
         logging.info(f"Searching translation from {from_lang}:{title} to {to_lang}")
-        r = requests.get(api_url, params=params, timeout=config.get('TIMEOUT_THIRD_PARTY', 15))
+        r = _limited_get(api_url, params=params, headers=headers, timeout=config.get('TIMEOUT_THIRD_PARTY', 15))
         r.raise_for_status()
         data = r.json()
         
@@ -126,7 +136,7 @@ def convert_to_de_wikipedia_url(wikipedia_url):
         logging.error("Error querying German langlinks for %s: %s", wikipedia_url, e)
         return wikipedia_url, None
 
-def fallback_wikipedia_url(query, langs=None, language="de"):
+def fallback_wikipedia_url(query, langs=None, language="de", config=None):
     # Decode any percent-encoded characters to get proper Unicode query
     try:
         query = urllib.parse.unquote(query)
@@ -143,10 +153,14 @@ def fallback_wikipedia_url(query, langs=None, language="de"):
         langs: Optional list of languages to try in sequence
                (overridden if language="en" is set)
         language: Language configuration ("de" or "en")
+        config: Configuration dictionary with timeout settings
         
     Returns:
         A valid Wikipedia URL or None if none was found
     """
+    if config is None:
+        config = DEFAULT_CONFIG
+    
     # If no languages are specified, choose based on language parameter
     if not langs:
         if language == "en":
@@ -167,12 +181,15 @@ def fallback_wikipedia_url(query, langs=None, language="de"):
                 "search": query,
                 "limit": 1,
                 "namespace": 0,
-                "format": "json"
+                "format": "json",
+                "maxlag": config.get("WIKIPEDIA_MAXLAG")
             }
+            
+            headers = {"User-Agent": config.get("USER_AGENT")}
             
             logging.info(f"Fallback ({lang}): Searching Wikipedia URL for '{query}'...")
             
-            response = requests.get(api_url, params=params)
+            response = _limited_get(api_url, params=params, headers=headers, timeout=config.get('TIMEOUT_THIRD_PARTY', 15))
             response.raise_for_status()
             
             data = response.json()
@@ -306,9 +323,12 @@ def get_wikipedia_extract(wikipedia_url, config=None):
             "exintro": True,
             "explaintext": True,
             "format": "json",
-            "titles": title_plain
+            "titles": title_plain,
+            "maxlag": config.get("WIKIPEDIA_MAXLAG")
         }
-        r = requests.get(api_url, params=params, timeout=config.get('TIMEOUT_THIRD_PARTY', 15))
+        headers = {"User-Agent": config.get("USER_AGENT")}
+        
+        r = _limited_get(api_url, params=params, headers=headers, timeout=config.get('TIMEOUT_THIRD_PARTY', 15))
         r.raise_for_status()
         data = r.json()
         pages = data.get("query", {}).get("pages", {})
@@ -337,7 +357,7 @@ def get_wikipedia_extract(wikipedia_url, config=None):
                     srv_api = f"https://{lang}.wikipedia.org/w/api.php"
                     srv_params = params.copy()
                     srv_params["titles"] = sr_title_plain
-                    r_sr = requests.get(srv_api, params=srv_params, timeout=config.get('TIMEOUT_THIRD_PARTY', 15))
+                    r_sr = _limited_get(srv_api, params=srv_params, headers=headers, timeout=config.get('TIMEOUT_THIRD_PARTY', 15))
                     r_sr.raise_for_status()
                     srv_pages = r_sr.json().get("query", {}).get("pages", {})
                     for srv_page in srv_pages.values():
@@ -362,7 +382,7 @@ def get_wikipedia_extract(wikipedia_url, config=None):
                     fb_api_url = f"https://{fb_lang}.wikipedia.org/w/api.php"
                     fb_params = params.copy()
                     fb_params["titles"] = fb_title_plain
-                    r_fb = requests.get(fb_api_url, params=fb_params, timeout=config.get('TIMEOUT_THIRD_PARTY', 15))
+                    r_fb = _limited_get(fb_api_url, params=fb_params, headers=headers, timeout=config.get('TIMEOUT_THIRD_PARTY', 15))
                     r_fb.raise_for_status()
                     fb_pages = r_fb.json().get("query", {}).get("pages", {})
                     for fb_page in fb_pages.values():
@@ -432,7 +452,7 @@ def get_wikipedia_extract(wikipedia_url, config=None):
                 syn_api = f"https://{syn_lang}.wikipedia.org/w/api.php"
                 syn_params = params.copy()
                 syn_params['titles'] = syn_title
-                r_syn = requests.get(syn_api, params=syn_params, timeout=config.get('TIMEOUT_THIRD_PARTY', 15))
+                r_syn = _limited_get(syn_api, params=syn_params, headers=headers, timeout=config.get('TIMEOUT_THIRD_PARTY', 15))
                 r_syn.raise_for_status()
                 pages_syn = r_syn.json().get('query', {}).get('pages', {})
                 for page in pages_syn.values():
@@ -470,9 +490,12 @@ def get_wikipedia_categories(wikipedia_url, config=None):
             "prop": "categories",
             "titles": title_plain,
             "cllimit": "max",
-            "format": "json"
+            "format": "json",
+            "maxlag": config.get("WIKIPEDIA_MAXLAG")
         }
-        r = requests.get(api_url, params=params, timeout=config.get('TIMEOUT_THIRD_PARTY', 15))
+        headers = {"User-Agent": config.get("USER_AGENT")}
+        
+        r = _limited_get(api_url, params=params, headers=headers, timeout=config.get('TIMEOUT_THIRD_PARTY', 15))
         r.raise_for_status()
         data = r.json()
         cats = []
@@ -521,9 +544,12 @@ def get_wikipedia_details(wikipedia_url, config=None):
             'page': title,
             'prop': 'text',
             'format': 'json',
-            'section': 0
+            'section': 0,
+            "maxlag": config.get("WIKIPEDIA_MAXLAG")
         }
-        r = requests.get(endpoint, params=params, timeout=config.get('TIMEOUT_THIRD_PARTY', 15))
+        headers = {"User-Agent": config.get("USER_AGENT")}
+        
+        r = _limited_get(endpoint, params=params, headers=headers, timeout=config.get('TIMEOUT_THIRD_PARTY', 15))
         r.raise_for_status()
         html = r.json().get('parse', {}).get('text', {}).get('*', '')
         soup = BeautifulSoup(html, 'html.parser')
@@ -544,13 +570,13 @@ def get_wikipedia_details(wikipedia_url, config=None):
     # 2. See also links via parse/links
     try:
         sec_params = {'action': 'parse', 'page': title, 'prop': 'sections', 'format': 'json'}
-        rsec = requests.get(endpoint, params=sec_params, timeout=config.get('TIMEOUT_THIRD_PARTY', 15))
+        rsec = _limited_get(endpoint, params=sec_params, headers=headers, timeout=config.get('TIMEOUT_THIRD_PARTY', 15))
         rsec.raise_for_status()
         secs = rsec.json().get('parse', {}).get('sections', [])
         idx = next((s['index'] for s in secs if s.get('line', '').lower() in ('see also', 'siehe auch')), None)
         if idx:
             link_params = {'action': 'parse', 'page': title, 'prop': 'links', 'format': 'json', 'section': idx}
-            rlink = requests.get(endpoint, params=link_params, timeout=config.get('TIMEOUT_THIRD_PARTY', 15))
+            rlink = _limited_get(endpoint, params=link_params, headers=headers, timeout=config.get('TIMEOUT_THIRD_PARTY', 15))
             rlink.raise_for_status()
             links = rlink.json().get('parse', {}).get('links', [])
             see = []
@@ -565,7 +591,7 @@ def get_wikipedia_details(wikipedia_url, config=None):
     # 3. Main image via pageimages
     try:
         img_params = {'action': 'query', 'prop': 'pageimages', 'piprop': 'original', 'titles': title, 'format': 'json'}
-        rimg = requests.get(endpoint, params=img_params, timeout=config.get('TIMEOUT_THIRD_PARTY', 15))
+        rimg = _limited_get(endpoint, params=img_params, headers=headers, timeout=config.get('TIMEOUT_THIRD_PARTY', 15))
         rimg.raise_for_status()
         pages = rimg.json().get('query', {}).get('pages', {})
         page_data = next(iter(pages.values()))
@@ -624,10 +650,13 @@ def get_wikipedia_summary_and_categories_props(wikipedia_url, config=None):
         'exintro': 1,
         'explaintext': 1,
         'cllimit': 'max',
-        'clshow': '!hidden'
+        'clshow': '!hidden',
+        "maxlag": config.get("WIKIPEDIA_MAXLAG")
     }
+    headers = {"User-Agent": config.get("USER_AGENT")}
+    
     try:
-        r = requests.get(endpoint, params=params, timeout=config.get('TIMEOUT_THIRD_PARTY', 15))
+        r = _limited_get(endpoint, params=params, headers=headers, timeout=config.get("TIMEOUT_THIRD_PARTY", 15))
         r.raise_for_status()
         pages = r.json().get('query', {}).get('pages', {})
         page = next(iter(pages.values()))

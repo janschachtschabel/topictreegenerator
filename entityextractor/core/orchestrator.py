@@ -11,6 +11,7 @@ import urllib.parse
 from entityextractor.config.settings import get_config
 from entityextractor.utils.logging_utils import configure_logging
 from entityextractor.utils.text_utils import chunk_text
+from entityextractor.utils.category_utils import filter_category_counts
 
 from entityextractor.core.extract_api import extract_and_link
 from entityextractor.core.generate_api import generate_and_link, compendium_and_link
@@ -204,6 +205,120 @@ def process_entities(input_text: str, user_config: dict = None):
                 vis = visualize_graph(result, config)
                 result["knowledgegraph_visualisation"] = [{"static": vis.get("png"), "interactive": vis.get("html")}]
         logging.info("[orchestrator] Chunking flow done in %.2f sec", time.time()-start)
+        if config.get("COLLECT_TRAINING_DATA", False):
+            result["trainingsdata"] = {
+                "entity_training_file": config.get("OPENAI_TRAINING_DATA_PATH"),
+                "relationship_training_file": config.get("OPENAI_RELATIONSHIP_TRAINING_DATA_PATH"),
+            }
+        # Statistik-Bereich
+        stats = {}
+        total = len(result["entities"])
+        stats["total_entities"] = total
+        # Typverteilung
+        type_counts = {}
+        for e in result["entities"]:
+            t = e.get("details", {}).get("typ", "")
+            type_counts[t] = type_counts.get(t, 0) + 1
+        stats["types_distribution"] = type_counts
+        # Linking-Erfolg
+        linked = {}
+        if total > 0:
+            wiki_count = sum(1 for e in result["entities"] if "wikipedia" in e.get("sources", {}))
+            wikidata_count = sum(1 for e in result["entities"] if "wikidata" in e.get("sources", {}))
+            dbpedia_count = sum(1 for e in result["entities"] if "dbpedia" in e.get("sources", {}))
+            linked["wikipedia"] = {"count": wiki_count, "percent": wiki_count * 100 / total}
+            linked["wikidata"] = {"count": wikidata_count, "percent": wikidata_count * 100 / total}
+            linked["dbpedia"] = {"count": dbpedia_count, "percent": dbpedia_count * 100 / total}
+        else:
+            linked["wikipedia"] = {"count": 0, "percent": 0}
+            linked["wikidata"] = {"count": 0, "percent": 0}
+            linked["dbpedia"] = {"count": 0, "percent": 0}
+        stats["linked"] = linked
+        # Top-Kategorien
+        cat_counts = {}
+        for e in result["entities"]:
+            cats = e.get("sources", {}).get("wikipedia", {}).get("categories", [])
+            for cat in cats:
+                cat_counts[cat] = cat_counts.get(cat, 0) + 1
+        filtered_cat_counts = filter_category_counts(cat_counts)
+        top_cats = sorted(filtered_cat_counts.items(), key=lambda x: -x[1])[:10]
+        stats["top_wikipedia_categories"] = [{"category": c, "count": n} for c, n in top_cats]
+        # Top-Wikidata-Types
+        wd_counts = {}
+        for e in result["entities"]:
+            types = e.get("sources", {}).get("wikidata", {}).get("types", [])
+            for ty in types:
+                wd_counts[ty] = wd_counts.get(ty, 0) + 1
+        top_wd = sorted(wd_counts.items(), key=lambda x: -x[1])[:10]
+        stats["top_wikidata_types"] = [{"type": ty, "count": n} for ty, n in top_wd]
+        # Top-Wikidata part_of
+        wdpo_counts = {}
+        for e in result["entities"]:
+            pos = e.get("sources", {}).get("wikidata", {}).get("part_of", [])
+            if isinstance(pos, list):
+                for po in pos:
+                    wdpo_counts[po] = wdpo_counts.get(po, 0) + 1
+            elif pos:
+                wdpo_counts[pos] = wdpo_counts.get(pos, 0) + 1
+
+        top_wd_po = sorted(wdpo_counts.items(), key=lambda x: -x[1])[:10]
+        stats["top_wikidata_part_of"] = [{"part_of": po, "count": n} for po, n in top_wd_po]
+        # Top-Wikidata has_parts
+        wdhp_counts = {}
+        for e in result["entities"]:
+            hps = e.get("sources", {}).get("wikidata", {}).get("has_parts", [])
+            if isinstance(hps, list):
+                for hp in hps:
+                    wdhp_counts[hp] = wdhp_counts.get(hp, 0) + 1
+            elif hps:
+                wdhp_counts[hps] = wdhp_counts.get(hps, 0) + 1
+
+        top_wd_hp = sorted(wdhp_counts.items(), key=lambda x: -x[1])[:10]
+        stats["top_wikidata_has_parts"] = [{"has_parts": hp, "count": n} for hp, n in top_wd_hp]
+        # Top-DBpedia-Subjects
+        sub_counts = {}
+        for e in result["entities"]:
+            subs = e.get("sources", {}).get("dbpedia", {}).get("subjects", [])
+            for sub in subs:
+                sub_counts[sub] = sub_counts.get(sub, 0) + 1
+        top_sub = sorted(sub_counts.items(), key=lambda x: -x[1])[:10]
+        stats["top_dbpedia_subjects"] = [{"subject": s, "count": n} for s, n in top_sub]
+        # Top-DBpedia part_of
+        dbpo_counts = {}
+        for e in result["entities"]:
+            pos = e.get("sources", {}).get("dbpedia", {}).get("part_of", [])
+            if isinstance(pos, list):
+                for po in pos:
+                    dbpo_counts[po] = dbpo_counts.get(po, 0) + 1
+            elif pos:
+                dbpo_counts[pos] = dbpo_counts.get(pos, 0) + 1
+
+        top_dbpo = sorted(dbpo_counts.items(), key=lambda x: -x[1])[:10]
+        stats["top_dbpedia_part_of"] = [{"part_of": po, "count": n} for po, n in top_dbpo]
+        # Top-DBpedia has_parts
+        dbhp_counts = {}
+        for e in result["entities"]:
+            hps = e.get("sources", {}).get("dbpedia", {}).get("has_parts", [])
+            if isinstance(hps, list):
+                for hp in hps:
+                    dbhp_counts[hp] = dbhp_counts.get(hp, 0) + 1
+            elif hps:
+                dbhp_counts[hps] = dbhp_counts.get(hps, 0) + 1
+
+        top_dbhp = sorted(dbhp_counts.items(), key=lambda x: -x[1])[:10]
+        stats["top_dbpedia_has_parts"] = [{"has_parts": hp, "count": n} for hp, n in top_dbhp]
+        # Entity connection counts
+        conn_map = {}
+        for r in result["relationships"]:
+            subj = r.get("subject")
+            obj = r.get("object")
+            if subj and obj:
+                conn_map.setdefault(subj, set()).add(obj)
+                conn_map.setdefault(obj, set()).add(subj)
+        entity_conn_list = [{"entity": ent, "count": len(neighbors)} for ent, neighbors in conn_map.items()]
+        entity_conn_list.sort(key=lambda x: -x["count"])
+        stats["entity_connections"] = entity_conn_list
+        result["statistics"] = stats
         return result
 
     # single-pass flow
@@ -357,4 +472,118 @@ def process_entities(input_text: str, user_config: dict = None):
             vis = visualize_graph(result, config)
             result["knowledgegraph_visualisation"] = [{"static": vis.get("png"), "interactive": vis.get("html")}]
     logging.info("[orchestrator] Single-pass done in %.2f sec", time.time()-start)
+    if config.get("COLLECT_TRAINING_DATA", False):
+        result["trainingsdata"] = {
+            "entity_training_file": config.get("OPENAI_TRAINING_DATA_PATH"),
+            "relationship_training_file": config.get("OPENAI_RELATIONSHIP_TRAINING_DATA_PATH"),
+        }
+    # Statistik-Bereich
+    stats = {}
+    total = len(result["entities"])
+    stats["total_entities"] = total
+    # Typverteilung
+    type_counts = {}
+    for e in result["entities"]:
+        t = e.get("details", {}).get("typ", "")
+        type_counts[t] = type_counts.get(t, 0) + 1
+    stats["types_distribution"] = type_counts
+    # Linking-Erfolg
+    linked = {}
+    if total > 0:
+        wiki_count = sum(1 for e in result["entities"] if "wikipedia" in e.get("sources", {}))
+        wikidata_count = sum(1 for e in result["entities"] if "wikidata" in e.get("sources", {}))
+        dbpedia_count = sum(1 for e in result["entities"] if "dbpedia" in e.get("sources", {}))
+        linked["wikipedia"] = {"count": wiki_count, "percent": wiki_count * 100 / total}
+        linked["wikidata"] = {"count": wikidata_count, "percent": wikidata_count * 100 / total}
+        linked["dbpedia"] = {"count": dbpedia_count, "percent": dbpedia_count * 100 / total}
+    else:
+        linked["wikipedia"] = {"count": 0, "percent": 0}
+        linked["wikidata"] = {"count": 0, "percent": 0}
+        linked["dbpedia"] = {"count": 0, "percent": 0}
+    stats["linked"] = linked
+    # Top-Kategorien
+    cat_counts = {}
+    for e in result["entities"]:
+        cats = e.get("sources", {}).get("wikipedia", {}).get("categories", [])
+        for cat in cats:
+            cat_counts[cat] = cat_counts.get(cat, 0) + 1
+    filtered_cat_counts = filter_category_counts(cat_counts)
+    top_cats = sorted(filtered_cat_counts.items(), key=lambda x: -x[1])[:10]
+    stats["top_wikipedia_categories"] = [{"category": c, "count": n} for c, n in top_cats]
+    # Top-Wikidata-Types
+    wd_counts = {}
+    for e in result["entities"]:
+        types = e.get("sources", {}).get("wikidata", {}).get("types", [])
+        for ty in types:
+            wd_counts[ty] = wd_counts.get(ty, 0) + 1
+    top_wd = sorted(wd_counts.items(), key=lambda x: -x[1])[:10]
+    stats["top_wikidata_types"] = [{"type": ty, "count": n} for ty, n in top_wd]
+    # Top-Wikidata part_of
+    wdpo_counts = {}
+    for e in result["entities"]:
+        pos = e.get("sources", {}).get("wikidata", {}).get("part_of", [])
+        if isinstance(pos, list):
+            for po in pos:
+                wdpo_counts[po] = wdpo_counts.get(po, 0) + 1
+        elif pos:
+            wdpo_counts[pos] = wdpo_counts.get(pos, 0) + 1
+
+    top_wd_po = sorted(wdpo_counts.items(), key=lambda x: -x[1])[:10]
+    stats["top_wikidata_part_of"] = [{"part_of": po, "count": n} for po, n in top_wd_po]
+    # Top-Wikidata has_parts
+    wdhp_counts = {}
+    for e in result["entities"]:
+        hps = e.get("sources", {}).get("wikidata", {}).get("has_parts", [])
+        if isinstance(hps, list):
+            for hp in hps:
+                wdhp_counts[hp] = wdhp_counts.get(hp, 0) + 1
+        elif hps:
+            wdhp_counts[hps] = wdhp_counts.get(hps, 0) + 1
+
+    top_wd_hp = sorted(wdhp_counts.items(), key=lambda x: -x[1])[:10]
+    stats["top_wikidata_has_parts"] = [{"has_parts": hp, "count": n} for hp, n in top_wd_hp]
+    # Top-DBpedia-Subjects
+    sub_counts = {}
+    for e in result["entities"]:
+        subs = e.get("sources", {}).get("dbpedia", {}).get("subjects", [])
+        for sub in subs:
+            sub_counts[sub] = sub_counts.get(sub, 0) + 1
+    top_sub = sorted(sub_counts.items(), key=lambda x: -x[1])[:10]
+    stats["top_dbpedia_subjects"] = [{"subject": s, "count": n} for s, n in top_sub]
+    # Top-DBpedia part_of
+    dbpo_counts = {}
+    for e in result["entities"]:
+        pos = e.get("sources", {}).get("dbpedia", {}).get("part_of", [])
+        if isinstance(pos, list):
+            for po in pos:
+                dbpo_counts[po] = dbpo_counts.get(po, 0) + 1
+        elif pos:
+            dbpo_counts[pos] = dbpo_counts.get(pos, 0) + 1
+
+    top_dbpo = sorted(dbpo_counts.items(), key=lambda x: -x[1])[:10]
+    stats["top_dbpedia_part_of"] = [{"part_of": po, "count": n} for po, n in top_dbpo]
+    # Top-DBpedia has_parts
+    dbhp_counts = {}
+    for e in result["entities"]:
+        hps = e.get("sources", {}).get("dbpedia", {}).get("has_parts", [])
+        if isinstance(hps, list):
+            for hp in hps:
+                dbhp_counts[hp] = dbhp_counts.get(hp, 0) + 1
+        elif hps:
+            dbhp_counts[hps] = dbhp_counts.get(hps, 0) + 1
+
+    top_dbhp = sorted(dbhp_counts.items(), key=lambda x: -x[1])[:10]
+    stats["top_dbpedia_has_parts"] = [{"has_parts": hp, "count": n} for hp, n in top_dbhp]
+    # Entity connection counts
+    conn_map = {}
+    for r in result["relationships"]:
+        subj = r.get("subject")
+        obj = r.get("object")
+        if subj and obj:
+            conn_map.setdefault(subj, set()).add(obj)
+            conn_map.setdefault(obj, set()).add(subj)
+    entity_conn_list = [{"entity": ent, "count": len(neighbors)} for ent, neighbors in conn_map.items()]
+    entity_conn_list.sort(key=lambda x: -x["count"])
+    stats["entity_connections"] = entity_conn_list
+    result["statistics"] = stats
     return result

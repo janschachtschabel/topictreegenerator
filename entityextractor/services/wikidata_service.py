@@ -11,8 +11,16 @@ import hashlib
 import json
 import os
 from openai import OpenAI
-from entityextractor.config.settings import DEFAULT_CONFIG
+from entityextractor.config.settings import get_config, DEFAULT_CONFIG
 from entityextractor.utils.text_utils import clean_json_from_markdown
+from entityextractor.utils.rate_limiter import RateLimiter
+
+_config = get_config()
+_rate_limiter = RateLimiter(_config["RATE_LIMIT_MAX_CALLS"], _config["RATE_LIMIT_PERIOD"], _config["RATE_LIMIT_BACKOFF_BASE"], _config["RATE_LIMIT_BACKOFF_MAX"])
+
+@_rate_limiter
+def _limited_get(url, **kwargs):
+    return requests.get(url, **kwargs)
 
 def search_wikidata_by_entity_name(entity_name, language="en", config=None, try_english=True):
     """
@@ -43,7 +51,7 @@ def search_wikidata_by_entity_name(entity_name, language="en", config=None, try_
     }
     
     try:
-        response = requests.get(api_url, params=params, timeout=config.get('TIMEOUT_THIRD_PARTY', 15))
+        response = _limited_get(api_url, params=params, headers={"User-Agent": config.get("USER_AGENT")}, timeout=config.get('TIMEOUT_THIRD_PARTY', 15))
         response.raise_for_status()
         data = response.json()
         
@@ -232,7 +240,7 @@ def get_wikidata_id_from_wikipedia_url(wikipedia_url, entity_name=None, config=N
     }
     
     try:
-        response = requests.get(api_url, params=params, timeout=config.get('TIMEOUT_THIRD_PARTY', 15))
+        response = _limited_get(api_url, params=params, headers={"User-Agent": config.get("USER_AGENT")}, timeout=config.get('TIMEOUT_THIRD_PARTY', 15))
         response.raise_for_status()
         data = response.json()
         
@@ -313,7 +321,7 @@ def get_wikidata_description(qid, lang="de", config=None):
         
     api_url = f"https://www.wikidata.org/wiki/Special:EntityData/{qid}.json"
     try:
-        r = requests.get(api_url, timeout=config.get('TIMEOUT_THIRD_PARTY', 15))
+        r = _limited_get(api_url, headers={"User-Agent": config.get("USER_AGENT")}, timeout=config.get('TIMEOUT_THIRD_PARTY', 15))
         r.raise_for_status()
         data = r.json()
         entities = data.get("entities", {})
@@ -363,7 +371,7 @@ def get_wikidata_details(entity_id, language="de", config=None):
     wikidata_url = f"https://www.wikidata.org/wiki/Special:EntityData/{entity_id}.json"
     
     try:
-        r = requests.get(wikidata_url, timeout=config.get('TIMEOUT_THIRD_PARTY', 15))
+        r = _limited_get(wikidata_url, headers={"User-Agent": config.get("USER_AGENT")}, timeout=config.get('TIMEOUT_THIRD_PARTY', 15))
         r.raise_for_status()
         data = r.json()
         
