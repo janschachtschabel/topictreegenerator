@@ -8,10 +8,11 @@ Eine modulare Streamlit-Anwendung zur Generierung hierarchischer Themenbäume, a
 - **Themenbaum-Generierung**
   - Single-pass oder iterative Erstellung
 - **Kompendiumserstellung**
-  - **Extract-Modus**: Extended Text → Entitäten → Kompendium
-  - **Generate-Modus**: Direkt Entitäten aus Prompt → Kompendium
-  - Einstellbare Seitenzahl im UI
-  - Live-Statusmeldungen (z.B. ‚Erzeuge Extended Text‘, ‚Extrahiere Entitäten‘, ‚Erstelle Kompendium‘)
+  - **Extract-Modus**: Extended Text → Entitäten → Kompendium (direkt vom entityextractor)
+  - **Generate-Modus**: Direkt Entitäten aus Prompt → Kompendium (direkt vom entityextractor)
+  - Einstellbare Seitenzahl im UI (bestimmt die Textlänge des Kompendiums)
+  - Live-Statusmeldungen (z.B. ‚Erzeuge Extended Text', ‚Extrahiere Entitäten')
+  - Automatische Literaturverzeichnis-Generierung mit Referenzen
 - **Entitäten-Extraktion**
   - Standard: Wikipedia
   - Optional: Wikidata, DBpedia (Checkboxen im UI)
@@ -54,8 +55,8 @@ streamlit run app.py
    - Wikidata (optional)
    - DBpedia (optional, DE/EN)
 3. **Process-Modus**
-   - *Extraktionsmodus*: Extended Text erstellen, Entitäten extrahieren, Kompendium generieren
-   - *Generierungsmodus*: Entitäten direkt aus Prompt generieren, dann Kompendium
+   - *Extraktionsmodus*: Extended Text erstellen, Entitäten extrahieren und Kompendium direkt generieren
+   - *Generierungsmodus*: Entitäten und Kompendium direkt aus Prompt generieren
 4. **Seitenzahl** für das finale Kompendium
 5. **Statusmeldungen** (ein-/ausschalten)
 
@@ -97,6 +98,10 @@ Siehe `requirements.txt`. Wichtige Pakete:
 - **Prompts** anpassen in `modules/kompendium_generator.py` und `modules/qa_generator.py`
 - **Neue Entity-Connector**: Implementiere im `entityextractor`-Modul und registriere in `utils.py`
 - **Modelle erweitern**: Liste in `app.py` anpassen
+- **Kompendium-Einstellungen**: Parameter in `modules/kompendium_generator.py` anpassen:
+  - `ENABLE_COMPENDIUM`: Aktiviert die Kompendium-Generierung
+  - `COMPENDIUM_LENGTH`: Zeichenanzahl für das Kompendium
+  - `COMPENDIUM_EDUCATIONAL_MODE`: Bildungsmodus für das Kompendium
 
 ---
 

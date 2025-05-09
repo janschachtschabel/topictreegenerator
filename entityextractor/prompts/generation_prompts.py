@@ -1,53 +1,7 @@
 """
 Centralized prompts for entity generation via OpenAI.
-Includes system and user prompts for both 'generate' and 'compendium' modes, English and German.
+Includes system and user prompts for 'generate' mode, English and German.
 """
-
-def get_system_prompt_compendium_en(max_entities, topic):
-    return f"""
-You are a comprehensive knowledge generator for creating educational compendia. Think carefully and answer thoroughly and completely.
-Generate exactly {max_entities} implicit, logical entities for the topic: {topic}.
-
-Output format:
-Each entity as a semicolon-separated line: name; type; wikipedia_url; citation.
-One entity per line. No JSON or additional formatting.
-
-Guidelines:
-- Generate only implicit entities; set 'inferred' to "implicit" for each.
-- Set 'citation' to "generated" for each.
-- Use only English Wikipedia (en.wikipedia.org) for titles and URLs; skip entities without articles.
-- Citations must be exact text spans from the input, max 5 words, no ellipses or truncation.
-- Wikipedia URLs must not include percent-encoded characters; special characters unencoded.
-- Entity types must match the allowed types.
-- Example types: Assessment, Activity, Competence, Credential, Curriculum, Date, Event, Feedback, Field, Funding, Goal, Group, Language, Location, Method, Objective, Organization, Partnership, Period, Person, Phenomenon, Policy, Prerequisite, Process, Project, Resource, Role, Subject, Support, System, Task, Term, Theory, Time, Tool, Value, Work
-- Do not include any explanations or additional text.
-"""
-
-def get_user_prompt_compendium_en(max_entities, topic):
-    return get_system_prompt_compendium_en(max_entities, topic)
-
-def get_system_prompt_compendium_de(max_entities, topic):
-    return f"""
-Du bist ein umfassender Wissensgenerator für die Erstellung von Bildungskompendien. Denke sorgfältig nach und antworte vollständig.
-Generiere genau {max_entities} implizite, logische Entitäten zum Thema: {topic}.
-
-Ausgabeformat:
-Jede Entität als semikolon-getrennte Zeile: name; type; wikipedia_url; citation.
-Eine Entität pro Zeile. Keine JSON oder zusätzliche Formatierung.
-
-Richtlinien:
-- Generiere ausschließlich implizite Entitäten und setze 'inferred' auf "implicit" für jede Entität.
-- Setze 'citation' auf "generated" für jede Entität.
-- Verwende nur die deutsche Wikipedia (de.wikipedia.org) für Titel und URLs; überspringe Entitäten ohne Artikel.
-- Zitate müssen exakte Textausschnitte aus dem Eingabetext sein, maximal 5 Wörter, keine Auslassungen.
-- Wikipedia-URLs dürfen keine Prozent-Codierung enthalten; Sonderzeichen unkodiert.
-- Entity-Typen müssen den erlaubten Typen entsprechen.
-- Beispiel-Typen: Bewertung, Aktivität, Kompetenz, Nachweis, Curriculum, Datum, Ereignis, Rückmeldung, Fachgebiet, Förderung, Ziel, Gruppe, Sprache, Ort, Methode, Lernziel, Organisation, Partnerschaft, Zeitraum, Person, Phänomen, Richtlinie, Voraussetzung, Prozess, Projekt, Ressource, Rolle, Thema, Unterstützung, System, Aufgabe, Begriff, Theorie, Zeit, Werkzeug, Wert, Werk
-- Keine Erklärungen oder zusätzlichen Texte.
-"""
-
-def get_user_prompt_compendium_de(max_entities, topic):
-    return get_system_prompt_compendium_de(max_entities, topic)
 
 def get_system_prompt_generate_en(max_entities, topic):
     return f"""

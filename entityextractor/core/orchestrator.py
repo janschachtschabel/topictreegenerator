@@ -14,12 +14,13 @@ from entityextractor.utils.text_utils import chunk_text
 from entityextractor.utils.category_utils import filter_category_counts
 
 from entityextractor.core.extract_api import extract_and_link
-from entityextractor.core.generate_api import generate_and_link, compendium_and_link
+from entityextractor.core.generate_api import generate_and_link
 from entityextractor.core.link_api import link_entities
 from entityextractor.core.relationship_api import infer_entity_relationships
 from entityextractor.core.visualization_api import visualize_graph
 from entityextractor.core.deduplication_utils import deduplicate_relationships_llm
 from entityextractor.core.semantic_dedup_utils import filter_semantically_similar_relationships
+from entityextractor.services.compendium_service import generate_compendium
 
 
 def process_entities(input_text: str, user_config: dict = None):
@@ -42,9 +43,8 @@ def process_entities(input_text: str, user_config: dict = None):
         all_ents, all_rels = [], []
         for i, c in enumerate(chunks, 1):
             logging.info("[orchestrator] Chunk %d/%d", i, len(chunks))
-            if mode == "compendium":
-                ents = compendium_and_link(c, config)
-            elif mode == "generate":
+            # Choose extraction or generation (compendium handled later via ENABLE_COMPENDIUM)
+            if mode == "generate":
                 ents = generate_and_link(c, config)
             else:
                 ents = extract_and_link(c, config)
@@ -319,12 +319,15 @@ def process_entities(input_text: str, user_config: dict = None):
         entity_conn_list.sort(key=lambda x: -x["count"])
         stats["entity_connections"] = entity_conn_list
         result["statistics"] = stats
+        if config.get("ENABLE_COMPENDIUM", False):
+            comp_text, refs = generate_compendium(input_text, result["entities"], result["relationships"], config)
+            # Strukturierte Referenzen mit Nummern
+            structured_refs = [{"number": idx+1, "url": url} for idx, url in enumerate(refs)]
+            result["compendium"] = {"text": comp_text, "references": structured_refs}
         return result
 
-    # single-pass flow
-    if mode == "compendium":
-        ents = compendium_and_link(input_text, config)
-    elif mode == "generate":
+    # single-pass flow: extract or generate
+    if mode == "generate":
         ents = generate_and_link(input_text, config)
     else:
         ents = extract_and_link(input_text, config)
@@ -332,7 +335,7 @@ def process_entities(input_text: str, user_config: dict = None):
     if config.get("RELATION_EXTRACTION", False):
         logging.info("[orchestrator] Starting single-pass relation extraction")
         # Build context for relationship inference
-        if mode in ("generate", "compendium") and all(e.get("wikipedia_extract") for e in ents):
+        if mode in ("generate") and all(e.get("wikipedia_extract") for e in ents):
             rel_context = "\n".join(e.get("wikipedia_extract") for e in ents)
         else:
             rel_context = input_text
@@ -394,7 +397,7 @@ def process_entities(input_text: str, user_config: dict = None):
         # DBpedia-Quellen auch im Single-Pass
         if config.get("USE_DBPEDIA", False):
             if e.get("dbpedia_info"):
-                bd = e.get("dbpedia_info")
+                bd = e["dbpedia_info"]
                 db_src = leg["sources"].setdefault("dbpedia", {})
                 # Basisfelder
                 db_src["resource_uri"] = bd.get("resource_uri", bd.get("uri", ""))
@@ -586,4 +589,9 @@ def process_entities(input_text: str, user_config: dict = None):
     entity_conn_list.sort(key=lambda x: -x["count"])
     stats["entity_connections"] = entity_conn_list
     result["statistics"] = stats
+    if config.get("ENABLE_COMPENDIUM", False):
+        comp_text, refs = generate_compendium(input_text, result["entities"], result["relationships"], config)
+        # Strukturierte Referenzen mit Nummern
+        structured_refs = [{"number": idx+1, "url": url} for idx, url in enumerate(refs)]
+        result["compendium"] = {"text": comp_text, "references": structured_refs}
     return result

@@ -189,9 +189,9 @@ def infer_entity_relationships(text, entities, user_config=None):
     # Implizite Beziehungen aktivieren, wenn ENABLE_RELATIONS_INFERENCE=True
     enable_inference = config.get("ENABLE_RELATIONS_INFERENCE", False)
     
-    # Primärer Prompt: extract vs generate/compendium
+    # Primärer Prompt: extract vs generate
     # Unified extract-first prompt
-    if mode in ("generate", "compendium"):
+    if mode == "generate":
         # All relationships mode
         if language == "en":
             system_prompt_explicit = get_explicit_system_prompt_all_en()
@@ -209,7 +209,7 @@ def infer_entity_relationships(text, entities, user_config=None):
             user_msg_explicit = get_explicit_user_prompt_extract_de(text, entity_info, max_relations)
 
     # Log the model being used
-    rel_type = "implizite" if mode in ("generate", "compendium") else "explizite"
+    rel_type = "implizite" if mode == "generate" else "explizite"
     logging.info(f"Rufe OpenAI API für {rel_type} Beziehungen auf (Modell {model})...")
     logging.debug(f"[REL_EXP] SYSTEM PROMPT:\n{system_prompt_explicit}")
     logging.debug(f"[REL_EXP] USER MSG:\n{user_msg_explicit}")
@@ -242,8 +242,8 @@ def infer_entity_relationships(text, entities, user_config=None):
         valid_relationships_explicit = []
         for rel in relationships_explicit:
             if all(k in rel for k in ["subject", "predicate", "object"]):
-                # In generate/compendium mode, mark all as implicit; else explicit
-                inferred_status = "implicit" if mode in ("generate", "compendium") else "explicit"
+                # In generate mode, mark all as implicit; else explicit
+                inferred_status = "implicit" if mode == "generate" else "explicit"
                 rel["inferred"] = inferred_status
                 rel["subject_type"] = entity_type_map.get(rel["subject"], "")
                 rel["object_type"] = entity_type_map.get(rel["object"], "")

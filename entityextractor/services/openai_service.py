@@ -19,6 +19,7 @@ from entityextractor.prompts.extract_prompts import (
     TYPE_RESTRICTION_TEMPLATE_EN, TYPE_RESTRICTION_TEMPLATE_DE
 )
 from entityextractor.utils.prompt_utils import apply_type_restrictions
+from entityextractor.prompts.compendium_prompts import get_educational_block_de, get_educational_block_en
 
 def extract_entities_with_openai(text, config=None):
     """
@@ -66,6 +67,12 @@ def extract_entities_with_openai(text, config=None):
     # Build system prompt and user message
     system_prompt = get_system_prompt_en(max_entities) if language == "en" else get_system_prompt_de(max_entities)
     system_prompt = apply_type_restrictions(system_prompt, allowed_entity_types, language)
+    
+    # Bildungsmodus: Zusätzliche Strukturierungsaspekte für Bildungswissen hinzufügen
+    if config.get("COMPENDIUM_EDUCATIONAL_MODE", False):
+        edu_block = get_educational_block_de() if language == "de" else get_educational_block_en()
+        system_prompt = f"{system_prompt.strip()}\n\n{edu_block}"
+    
     user_msg = USER_PROMPT_EN.format(text=text) if language == "en" else USER_PROMPT_DE.format(text=text)
 
     try:

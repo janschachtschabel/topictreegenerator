@@ -1,8 +1,7 @@
 """
 Entity generation core functionality.
 
-This module provides functions for generating entities related to a specific topic
-to create a comprehensive knowledge compendium.
+This module provides functions for generating entities related to a specific topic.
 """
 
 import logging
@@ -16,15 +15,12 @@ from entityextractor.utils.text_utils import clean_json_from_markdown
 from entityextractor.services.openai_service import save_training_data as save_extraction_training_data
 from entityextractor.core.entity_inference import infer_entities
 from entityextractor.prompts.generation_prompts import (
-    get_system_prompt_compendium_en,
-    get_user_prompt_compendium_en,
-    get_system_prompt_compendium_de,
-    get_user_prompt_compendium_de,
     get_system_prompt_generate_en,
     get_user_prompt_generate_en,
     get_system_prompt_generate_de,
     get_user_prompt_generate_de,
 )
+from entityextractor.prompts.compendium_prompts import get_educational_block_de, get_educational_block_en
 from entityextractor.utils.prompt_utils import apply_type_restrictions
 
 def save_training_data(topic, entities, config=None):
@@ -45,22 +41,14 @@ def save_training_data(topic, entities, config=None):
     try:
         # Determine prompts from centralized generation_prompts module
         language = config.get("LANGUAGE", "de")
-        mode = config.get("MODE", "")
         max_entities = config.get("MAX_ENTITIES", 10)
-        if mode == "compendium":
-            if language == "en":
-                system_prompt = get_system_prompt_compendium_en(max_entities, topic)
-                user_prompt = get_user_prompt_compendium_en(max_entities, topic)
-            else:
-                system_prompt = get_system_prompt_compendium_de(max_entities, topic)
-                user_prompt = get_user_prompt_compendium_de(max_entities, topic)
+        # Use generation prompts for training data
+        if language == "en":
+            system_prompt = get_system_prompt_generate_en(max_entities, topic)
+            user_prompt = get_user_prompt_generate_en(max_entities, topic)
         else:
-            if language == "en":
-                system_prompt = get_system_prompt_generate_en(max_entities, topic)
-                user_prompt = get_user_prompt_generate_en(max_entities, topic)
-            else:
-                system_prompt = get_system_prompt_generate_de(max_entities, topic)
-                user_prompt = get_user_prompt_generate_de(max_entities, topic)
+            system_prompt = get_system_prompt_generate_de(max_entities, topic)
+            user_prompt = get_user_prompt_generate_de(max_entities, topic)
         
         # Build semicolon-separated assistant content for training
         assistant_content = "\n".join(
@@ -75,10 +63,9 @@ def save_training_data(topic, entities, config=None):
         }
         
         # Ensure each entity has an 'inferred' field
-        mode = config.get("MODE", "")
         for ent in entities:
             if "inferred" not in ent:
-                ent["inferred"] = "implicit" if mode in ("generate", "compendium") else "explicit"
+                ent["inferred"] = "implicit"
         
         # Append to the JSONL file
         with open(training_data_path, "a", encoding="utf-8") as f:
@@ -129,27 +116,22 @@ def generate_entities(topic, user_config=None):
     # Get allowed entity types if specified
     allowed_entity_types = config.get("ALLOWED_ENTITY_TYPES", "auto")
     
-    # Prompt preparation using centralized prompt functions
-    mode = config.get("MODE", "extract")
-    if mode == "compendium":
-        if language == "de":
-            system_prompt = get_system_prompt_compendium_de(max_entities, topic)
-            user_msg = get_user_prompt_compendium_de(max_entities, topic)
-        else:
-            system_prompt = get_system_prompt_compendium_en(max_entities, topic)
-            user_msg = get_user_prompt_compendium_en(max_entities, topic)
+    # Only generate mode supported; choose prompts based on language
+    if language == "de":
+        system_prompt = get_system_prompt_generate_de(max_entities, topic)
+        user_msg = get_user_prompt_generate_de(max_entities, topic)
     else:
-        # Default generate mode
-        if language == "de":
-            system_prompt = get_system_prompt_generate_de(max_entities, topic)
-            user_msg = get_user_prompt_generate_de(max_entities, topic)
-        else:
-            system_prompt = get_system_prompt_generate_en(max_entities, topic)
-            user_msg = get_user_prompt_generate_en(max_entities, topic)
-    
+        system_prompt = get_system_prompt_generate_en(max_entities, topic)
+        user_msg = get_user_prompt_generate_en(max_entities, topic)
+
     # Apply unified entity type restriction
     system_prompt = apply_type_restrictions(system_prompt, allowed_entity_types, language)
-    
+
+    # Bildungsmodus: Konsumiere zentrale Prompt-Blöcke
+    if config.get("COMPENDIUM_EDUCATIONAL_MODE", False):
+        edu_block = get_educational_block_de() if language == "de" else get_educational_block_en()
+        system_prompt = f"{system_prompt.strip()}\n\n{edu_block}"
+
     try:
         # Log the model being used
         logging.info(f"Generating entities with OpenAI model {model}...")

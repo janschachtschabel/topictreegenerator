@@ -1,8 +1,7 @@
 """
 generate_api.py
 
-Provides unified functions to generate entities (both 'generate' and 'compendium')
- and link them to knowledge bases.
+Provides unified function to generate entities and link them to knowledge bases.
 """
 
 import logging
@@ -26,25 +25,4 @@ def generate_and_link(topic: str, config: dict) -> list:
     logging.info(f"[generate_api] Generated {len(entities)} entities")
     linked = link_entities(entities, topic, config)
     logging.info(f"[generate_api] Linked {len(linked)} entities")
-    return linked
-
-
-def compendium_and_link(topic: str, config: dict) -> list:
-    """
-    Generate a detailed compendium of implicit entities and link them.
-
-    Args:
-        topic: The subject for compendium generation
-        config: Configuration dict
-
-    Returns:
-        List of linked entities with implicit focus
-    """
-    config = config.copy()
-    config["MODE"] = "compendium"
-    logging.info(f"[generate_api] Starting compendium for topic: {topic}")
-    entities = generate_entities(topic, config)
-    logging.info(f"[generate_api] Generated {len(entities)} compendium entities")
-    linked = link_entities(entities, topic, config)
-    logging.info(f"[generate_api] Linked {len(linked)} compendium entities")
     return linked

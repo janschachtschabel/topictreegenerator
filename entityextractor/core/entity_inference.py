@@ -51,7 +51,7 @@ def infer_entities(text, entities, user_config=None):
         explicit.append({"name": name, "type": typ, "wikipedia_url": url, "inferred": inferred_flag})
     # Logging: Anzahl initialer Entitäten (unterschiedliche Bezeichnungen je Modus)
     mode = config.get("MODE", "extract")
-    if mode in ("generate", "compendium"):
+    if mode == "generate":
         logging.info(f"Vorhandene generierte Entitäten: {len(explicit)}")
     else:
         logging.info(f"Vorhandene explizite Entitäten: {len(explicit)}")
@@ -72,6 +72,35 @@ def infer_entities(text, entities, user_config=None):
         user_msg = get_user_prompt_entity_inference_en(text, explicit, max_entities)
     # Apply unified entity type restriction
     system_prompt = apply_type_restrictions(system_prompt, config.get("ALLOWED_ENTITY_TYPES", "auto"), language)
+    # Bildungsmodus: Zusätzliche Strukturierungsaspekte für Bildungswissen hinzufügen
+    if config.get("COMPENDIUM_EDUCATIONAL_MODE", False):
+        if language == "de":
+            edu_block = (
+                "Ergänzen Sie die Entitäten so, dass sie das für Bildungszwecke relevante Weltwissen zum Thema abbilden. "
+                "Nutzen Sie folgende Aspekte zur Strukturierung: Einführung, Zielsetzung, Grundlegendes – Thema, Zweck, Abgrenzung, Beitrag zum Weltwissen; "
+                "Grundlegende Fachinhalte & Terminologie (inkl. Englisch) – Schlüsselbegriffe, Formeln, Gesetzmäßigkeiten, mehrsprachiges Fachvokabular; "
+                "Systematik & Untergliederung – Fachliche Struktur, Teilgebiete, Klassifikationssysteme; Gesellschaftlicher Kontext – Alltag, Haushalt, Natur, Hobbys, soziale Themen, öffentliche Debatten; "
+                "Historische Entwicklung – Zentrale Meilensteine, Personen, Orte, kulturelle Besonderheiten; Akteure, Institutionen & Netzwerke – Wichtige Persönlichkeiten (historisch & aktuell), Organisationen, Projekte; "
+                "Beruf & Praxis – Relevante Berufe, Branchen, Kompetenzen, kommerzielle Nutzung; Quellen, Literatur & Datensammlungen – Standardwerke, Zeitschriften, Studien, OER-Repositorien, Datenbanken; "
+                "Bildungspolitische & didaktische Aspekte – Lehrpläne, Bildungsstandards, Lernorte, Lernmaterialien, Kompetenzrahmen; Rechtliche & ethische Rahmenbedingungen – Gesetze, Richtlinien, Lizenzmodelle, Datenschutz, ethische Grundsätze; "
+                "Nachhaltigkeit & gesellschaftliche Verantwortung – Ökologische und soziale Auswirkungen, globale Ziele, Technikfolgenabschätzung; Interdisziplinarität & Anschlusswissen – Fachübergreifende Verknüpfungen, mögliche Synergien, angrenzende Wissensgebiete; "
+                "Aktuelle Entwicklungen & Forschung – Neueste Studien, Innovationen, offene Fragen, Zukunftstrends; Verknüpfung mit anderen Ressourcentypen – Personen, Orte, Organisationen, Berufe, technische Tools, Metadaten; "
+                "Praxisbeispiele, Fallstudien & Best Practices – Konkrete Anwendungen, Transfermodelle, Checklisten, exemplarische Projekte."
+            )
+        else:
+            edu_block = (
+                "If educational mode is enabled, generate entities representing world knowledge relevant for educational purposes about the topic. "
+                "Structure them using the following aspects: Introduction, Objectives, Fundamentals – topic, purpose, scope, contribution to world knowledge; "
+                "Fundamental Concepts & Terminology (including English terms) – key terms, formulas, laws, multilingual technical vocabulary; "
+                "Systematics & Structure – domain structure, subfields, classification systems; Societal Context – everyday life, household, nature, hobbies, social issues, public debates; "
+                "Historical Development – key milestones, persons, places, cultural particularities; Actors, Institutions & Networks – important personalities (historical & current), organizations, projects; "
+                "Professions & Practice – relevant professions, industries, competencies, commercial applications; Sources, Literature & Data Collections – standard works, journals, studies, OER repositories, databases; "
+                "Educational & Didactic Aspects – curricula, educational standards, learning environments, learning materials, competency frameworks; Legal & Ethical Frameworks – laws, guidelines, licensing models, data protection, ethical principles; "
+                "Sustainability & Social Responsibility – ecological and social impacts, global goals, technology assessment; Interdisciplinarity & Further Knowledge – cross-disciplinary connections, potential synergies, adjacent fields; "
+                "Current Developments & Research – latest studies, innovations, open questions, future trends; Linking with Other Resource Types – people, places, organizations, professions, technical tools, metadata; "
+                "Practical Examples, Case Studies & Best Practices – concrete applications, transfer models, checklists, exemplary projects."
+            )
+        system_prompt = f"{system_prompt.strip()}\n\n{edu_block}"
     # API-Aufruf
     logging.info(f"Rufe OpenAI API für implizite Entitäten auf (Modell {config.get('MODEL', DEFAULT_CONFIG['MODEL'])})...")
     client = OpenAI(api_key=config.get("OPENAI_API_KEY"))

@@ -210,17 +210,41 @@ def process_node(node: dict, client: OpenAI, config: dict,
         try:
             status_text.text(f"Extrahiere Entitäten für: {current_path}")
             
+            # Erweitere die Konfiguration um Kompendium-Parameter
+            extract_config = config.copy()
+            if generate_final_compendium:
+                extract_config.update({
+                    "ENABLE_COMPENDIUM": True,
+                    "COMPENDIUM_LENGTH": pages * 2000,  # Ca. 2000 Zeichen pro Seite
+                    "COMPENDIUM_EDUCATIONAL_MODE": True
+                })
+            
             # Verwende den Entity Extractor aus dem entityextractor Modul
             raw_result = process_entities(
                 node["additional_data"]["extended_text"],
-                config
+                extract_config
             )
             
-            # raw_result kann dict mit 'entities' und 'relationships' sein
+            # raw_result kann dict mit 'entities', 'relationships' und 'compendium' sein
             entities = raw_result.get("entities", raw_result)[:10]
             
             # Speichere die extrahierten Entitäten
             node["additional_data"]["entities"] = entities
+            
+            # Speichere das Kompendium, wenn es generiert wurde
+            if generate_final_compendium and "compendium" in raw_result:
+                compendium_data = raw_result["compendium"]
+                compendium_text = compendium_data.get("text", "")
+                references = compendium_data.get("references", [])
+                
+                # Füge Literaturverzeichnis hinzu, wenn vorhanden
+                if references:
+                    bibliography = "\n\n## Literaturverzeichnis\n"
+                    for ref in references:
+                        bibliography += f"{ref.get('number', '')}. {ref.get('url', '')}\n"
+                    compendium_text += bibliography
+                
+                node["additional_data"]["compendium_text"] = compendium_text
             
             # Kürze citation in Details auf max. 5 Wörter
             for entity in node["additional_data"]["entities"]:
@@ -265,15 +289,46 @@ def process_node(node: dict, client: OpenAI, config: dict,
     # 2b. Im Generierungsmodus Entitäten direkt aus Prompt erzeugen
     elif process_mode == "generate" and extract_entities:
         status_text.text(f"Generiere Entitäten im Kompendium-Modus für: {current_path}")
-        config_comp = {**config, "MODE": "compendium"}
+        
+        # Konfiguration für den Generierungsmodus
+        generate_config = config.copy()
+        generate_config["MODE"] = "generate"
+        
+        # Kompendium-Parameter hinzufügen, wenn gewünscht
+        if generate_final_compendium:
+            generate_config.update({
+                "ENABLE_COMPENDIUM": True,
+                "COMPENDIUM_LENGTH": pages * 2000,  # Ca. 2000 Zeichen pro Seite
+                "COMPENDIUM_EDUCATIONAL_MODE": True
+            })
+        
         # Nur Titel, Beschreibung und Metadaten extrahieren
         title = node.get("title", "")
         description = node.get("properties", {}).get("cm:description", [""])[0]
         metadata = node.get("metadata", {})
         prompt_for_extraction = f"Titel: {title}\nBeschreibung: {description}\nMetadaten: {json.dumps(metadata, ensure_ascii=False)}"
-        raw_result = process_entities(prompt_for_extraction, config_comp)
+        
+        # Verwende den Entity Extractor im generate-Modus
+        raw_result = process_entities(prompt_for_extraction, generate_config)
+        
+        # Verarbeite Entitäten
         entities = raw_result.get("entities", raw_result)[: config.get("MAX_ENTITIES", 10)]
         node["additional_data"]["entities"] = entities
+        
+        # Speichere das Kompendium, wenn es generiert wurde
+        if generate_final_compendium and "compendium" in raw_result:
+            compendium_data = raw_result["compendium"]
+            compendium_text = compendium_data.get("text", "")
+            references = compendium_data.get("references", [])
+            
+            # Füge Literaturverzeichnis hinzu, wenn vorhanden
+            if references:
+                bibliography = "\n\n## Literaturverzeichnis\n"
+                for ref in references:
+                    bibliography += f"{ref.get('number', '')}. {ref.get('url', '')}\n"
+                compendium_text += bibliography
+            
+            node["additional_data"]["compendium_text"] = compendium_text
         
         # Kürze citation in Details auf max. 5 Wörter
         for entity in node["additional_data"]["entities"]:
@@ -283,10 +338,11 @@ def process_node(node: dict, client: OpenAI, config: dict,
                 if len(words) > 5:
                     details["citation"] = " ".join(words[:5]) + "..."
     
-    # 3. Erstelle finalen Kompendiumstext, wenn Entitäten vorliegen (beide Modi)
-    if generate_final_compendium and node["additional_data"].get("entities"):
+    # 3. Erstelle finalen Kompendiumstext, wenn Entitäten vorliegen aber kein Kompendium generiert wurde
+    # Dieser Schritt ist nur noch als Fallback notwendig, wenn die direkte Kompendium-Generierung nicht funktioniert hat
+    if generate_final_compendium and node["additional_data"].get("entities") and not node["additional_data"].get("compendium_text"):
         try:
-            status_text.text(f"Erstelle kompendialen Text für: {current_path}")
+            status_text.text(f"Erstelle kompendialen Text als Fallback für: {current_path}")
             
             # Extrahiere relevante Informationen aus den Entitäten
             entities_info = []
